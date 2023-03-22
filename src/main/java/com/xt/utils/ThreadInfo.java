@@ -1,4 +1,4 @@
-package com.pabu5h.utils;
+package com.xt.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
