@@ -1,7 +1,7 @@
 package com.xt.utils;
 
 public class MathUtil {
-    static Double ObjToDouble(Object obj) {
+    public static Double ObjToDouble(Object obj) {
         if (obj == null) {
             return null;
         }
