@@ -40,4 +40,10 @@ public class DateTimeUtil {
         return dateTime.format(formatter);
     }
 
+    public static Long getTimeStampFromLocalDateTime(LocalDateTime dateTime) {
+        return dateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    public static Long getTimeStampFromLocalDateTimeStr(String dateTimeStr) {
+        return getLocalDateTime(dateTimeStr).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
 }
