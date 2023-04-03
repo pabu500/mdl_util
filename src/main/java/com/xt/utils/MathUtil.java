@@ -57,7 +57,6 @@ public class MathUtil {
                 dominantFrequency = count;
             }
         }
-
         return dominantLong;
     }
 }
