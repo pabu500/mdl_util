@@ -19,10 +19,10 @@ public class DateTimeUtil {
     public final static long twoHours = 7200000L;
     public final static long oneHour = 3600000L;
     public final static long halfHour = 1800000L;
-    public final static long fifteenMin = 900000L;
-    public final static long fiveMin = 300000L;
-    public final static long oneMin = 60000L;
-    public final static long halfMin = 30000L;
+    public final static long fifteenMinutes = 900000L;
+    public final static long fiveMinutes = 300000L;
+    public final static long oneMinute = 60000L;
+    public final static long halfMinute = 30000L;
     public final static long tenSec = 10000L;
 
     public  final static String desTimeStampFormat = "yyyy-MM-dd HH:mm:ss";
