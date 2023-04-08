@@ -42,6 +42,16 @@ public class MathUtil {
         return ((Number) obj).intValue();
     }
 
+    public double findMax(List<Double> numbers) {
+        double max = numbers.get(0);
+        for (double number : numbers) {
+            if (number > max) {
+                max = number;
+            }
+        }
+        return max;
+    }
+
     public static Long findDominantLong(List<Double> numbers) {
         Map<Long, Integer> frequencyMap = new HashMap<>();
         long dominantLong = Math.round(numbers.get(0));
