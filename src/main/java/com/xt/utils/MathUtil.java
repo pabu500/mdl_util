@@ -42,7 +42,7 @@ public class MathUtil {
         return ((Number) obj).intValue();
     }
 
-    public double findMax(List<Double> numbers) {
+    public static double findMax(List<Double> numbers) {
         double max = numbers.get(0);
         for (double number : numbers) {
             if (number > max) {
