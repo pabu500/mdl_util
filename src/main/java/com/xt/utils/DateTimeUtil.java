@@ -28,7 +28,7 @@ public class DateTimeUtil {
     public  final static String desTimeStampFormat = "yyyy-MM-dd HH:mm:ss";
     public  final static String desTimeStampFormatIncludingMs = "yyyy-MM-dd HH:mm:ss.SSS";
 
-    public  final static String desTimeStampFormatIncludingMs6 = "yyyy-MM-dd HH:mm:ss.SSSSSSS";
+    public  final static String desTimeStampFormatIncludingMs6 = "yyyy-MM-dd HH:mm:ss.SSSSSS";
 
     public final static SimpleDateFormat sdf = new SimpleDateFormat(desTimeStampFormat);
     public final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern(desTimeStampFormat);
