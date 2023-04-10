@@ -28,12 +28,28 @@ public class DateTimeUtil {
     public  final static String desTimeStampFormat = "yyyy-MM-dd HH:mm:ss";
     public  final static String desTimeStampFormatIncludingMs = "yyyy-MM-dd HH:mm:ss.SSS";
 
+    public  final static String desTimeStampFormatIncludingMs6 = "yyyy-MM-dd HH:mm:ss.SSSD";
+
     public final static SimpleDateFormat sdf = new SimpleDateFormat(desTimeStampFormat);
     public final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern(desTimeStampFormat);
     public final static SimpleDateFormat sdfms = new SimpleDateFormat(desTimeStampFormatIncludingMs);
     public final static DateTimeFormatter formatterMs = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs);
+    public final static SimpleDateFormat sdfms6 = new SimpleDateFormat(desTimeStampFormatIncludingMs6);
+    public final static DateTimeFormatter formatterMs6 = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs6);
     public static LocalDateTime getLocalDateTime(String dateTimeStr) {
-        return LocalDateTime.parse(dateTimeStr, formatter);
+        try {
+            return LocalDateTime.parse(dateTimeStr, formatter);
+        }catch (Exception e) {
+            try {
+                return LocalDateTime.parse(dateTimeStr, formatterMs);
+            } catch (Exception e1) {
+                try {
+                    return LocalDateTime.parse(dateTimeStr, formatterMs6);
+                } catch (Exception e2) {
+                    return null;
+                }
+            }
+        }
     }
 
     public static String getLocalDateTimeStr(LocalDateTime dateTime) {
