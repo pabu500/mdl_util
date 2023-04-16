@@ -52,6 +52,14 @@ public class MathUtil {
         return max;
     }
 
+    public static double findAverage(List<Double> numbers) {
+        double sum = 0;
+        for (double number : numbers) {
+            sum += number;
+        }
+        return sum / numbers.size();
+    }
+
     public static Long findDominantLong(List<Double> numbers) {
         Map<Long, Integer> frequencyMap = new HashMap<>();
         long dominantLong = Math.round(numbers.get(0));
