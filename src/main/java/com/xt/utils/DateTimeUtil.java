@@ -83,4 +83,8 @@ public class DateTimeUtil {
     public static Long getTimeStampFromLocalDateTimeStr(String dateTimeStr) {
         return getLocalDateTime(dateTimeStr).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
+
+    public static LocalDateTime getZonedLocalDateTime(LocalDateTime dateTime, ZoneId zoneId) {
+        return dateTime.atZone(zoneId).toLocalDateTime();
+    }
 }
