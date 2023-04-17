@@ -2,6 +2,8 @@ package com.xt.utils;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class DateTimeUtil {
@@ -27,7 +29,6 @@ public class DateTimeUtil {
 
     public  final static String desTimeStampFormat = "yyyy-MM-dd HH:mm:ss";
     public  final static String desTimeStampFormatIncludingMs = "yyyy-MM-dd HH:mm:ss.SSS";
-
     public  final static String desTimeStampFormatIncludingMs6 = "yyyy-MM-dd HH:mm:ss.SSSSSS";
 
     public final static SimpleDateFormat sdf = new SimpleDateFormat(desTimeStampFormat);
@@ -52,8 +53,28 @@ public class DateTimeUtil {
         }
     }
 
+    public static ZonedDateTime getZonedDateTime(String dateTimeStr, ZoneId zoneId) {
+        try {
+            return ZonedDateTime.parse(dateTimeStr, formatter).withZoneSameInstant(zoneId);
+        }catch (Exception e) {
+            try {
+                return ZonedDateTime.parse(dateTimeStr, formatterMs).withZoneSameInstant(zoneId);
+            } catch (Exception e1) {
+                try {
+                    return ZonedDateTime.parse(dateTimeStr, formatterMs6).withZoneSameInstant(zoneId);
+                } catch (Exception e2) {
+                    return null;
+                }
+            }
+        }
+    }
+
     public static String getLocalDateTimeStr(LocalDateTime dateTime) {
         return dateTime.format(formatter);
+    }
+
+    public static String getZonedDateTimeStr(LocalDateTime dateTime, String format, ZoneId zoneId) {
+        return dateTime.atZone(zoneId).format(DateTimeFormatter.ofPattern(format));
     }
 
     public static Long getTimeStampFromLocalDateTime(LocalDateTime dateTime) {
