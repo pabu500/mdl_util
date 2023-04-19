@@ -82,9 +82,14 @@ public class StringValidate {
         return validate(input, glb_reg_fullName, glb_regNG_fullName, glb_fullName_callout);
     }
     public static String validateEmail(String input){
+        return validate(input, glb_reg_email, glb_regNG_email, glb_email_callout);
+    }
+    public static String validatePhone(String input){
+        return validate(input, glb_reg_phone, glb_regNG_phone, glb_phone_callout);
+    }
+    public static String validatePassword(String input){
         //regex string not working, use break down method
-        //        return validate(input, glb_reg_email, glb_regNG_email, glb_email_callout);
-
+//        return validate(input, glb_reg_password, glb_regNG_password, glb_password_callout);
         boolean lengthOK = input.length()>=8 && input.length()<=50;
 
         Pattern alphaCap = Pattern.compile("[A-Z]");
@@ -96,11 +101,6 @@ public class StringValidate {
 //        Pattern special = Pattern.compile("[\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_+\\{\\}\\[\\]\\?<>|_]");
 //        boolean hasSpecial = special.matcher(input).find();
         return lengthOK && hasAlphaCap && hasAlphaLow && hasDigit ? null : glb_email_callout;
-    }
-    public static String validatePhone(String input){
-        return validate(input, glb_reg_phone, glb_regNG_phone, glb_phone_callout);
-    }
-    public static String validatePassword(String input){
-        return validate(input, glb_reg_password, glb_regNG_password, glb_password_callout);
+
     }
 }
