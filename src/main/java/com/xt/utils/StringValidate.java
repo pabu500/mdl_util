@@ -100,7 +100,7 @@ public class StringValidate {
         boolean hasDigit = digit.matcher(input).find();
 //        Pattern special = Pattern.compile("[\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_+\\{\\}\\[\\]\\?<>|_]");
 //        boolean hasSpecial = special.matcher(input).find();
-        return lengthOK && hasAlphaCap && hasAlphaLow && hasDigit ? null : glb_email_callout;
+        return lengthOK && hasAlphaCap && hasAlphaLow && hasDigit ? null : glb_password_callout;
 
     }
 }
