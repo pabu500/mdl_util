@@ -1,5 +1,7 @@
 package com.xt.utils;
 
+import java.util.regex.Pattern;
+
 public class StringValidate {
     // This file contains all the global variables and public staticants used in the app
     public static int maxLoginNameLength = 30;
@@ -20,7 +22,7 @@ public class StringValidate {
     public static String glb_fullName_callout = "Please provide a valid full name";
     public static String glb_regNG_fullName = "[^a-zA-Z '\\.]|([.']| )(\\.|')|(\s)(\s)";
     // r"^
-    // [a-zA-Z0-9-]  //mmatches any character from the alphabet (lowercase or uppercase), digits, or the hyphen symbol
+    // [a-zA-Z0-9-]  //matches any character from the alphabet (lowercase or uppercase), digits, or the hyphen symbol
     // {6,} //matches the preceding expression (a character from the alphabet or a hyphen symbol) at least 6 times
     // $
     public static String glb_reg_loginName = "^[a-zA-Z0-9-]{6,}$";
@@ -80,7 +82,20 @@ public class StringValidate {
         return validate(input, glb_reg_fullName, glb_regNG_fullName, glb_fullName_callout);
     }
     public static String validateEmail(String input){
-        return validate(input, glb_reg_email, glb_regNG_email, glb_email_callout);
+        //regex string not working, use break down method
+        //        return validate(input, glb_reg_email, glb_regNG_email, glb_email_callout);
+
+        boolean lengthOK = input.length()>=8 && input.length()<=50;
+
+        Pattern alphaCap = Pattern.compile("[A-Z]");
+        boolean hasAlphaCap = alphaCap.matcher(input).find();
+        Pattern alphaLow = Pattern.compile("[a-z]");
+        boolean hasAlphaLow = alphaLow.matcher(input).find();
+        Pattern digit = Pattern.compile("[0-9]");
+        boolean hasDigit = digit.matcher(input).find();
+//        Pattern special = Pattern.compile("[\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)_+\\{\\}\\[\\]\\?<>|_]");
+//        boolean hasSpecial = special.matcher(input).find();
+        return lengthOK && hasAlphaCap && hasAlphaLow && hasDigit ? null : glb_email_callout;
     }
     public static String validatePhone(String input){
         return validate(input, glb_reg_phone, glb_regNG_phone, glb_phone_callout);
