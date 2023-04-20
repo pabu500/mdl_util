@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class DateTimeUtil {
     public final static long oneYear = 31536000000L;
@@ -46,6 +47,26 @@ public class DateTimeUtil {
             } catch (Exception e1) {
                 try {
                     return LocalDateTime.parse(dateTimeStr, formatterMs6);
+                } catch (Exception e2) {
+                    return null;
+                }
+            }
+        }
+    }
+
+    public static ZonedDateTime getZonedDateTime(LocalDateTime dateTime, ZoneId zoneId) {
+        return dateTime.atZone(zoneId);
+    }
+
+    public static String getZonedDateTimeStr(String localDateTimeStr, ZoneId zoneId) {
+        try {
+            return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatter);
+        }catch (Exception e) {
+            try {
+                return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs);
+            } catch (Exception e1) {
+                try {
+                    return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs6);
                 } catch (Exception e2) {
                     return null;
                 }
