@@ -57,23 +57,6 @@ public class DateTimeUtil {
     public static ZonedDateTime getZonedDateTime(LocalDateTime dateTime, ZoneId zoneId) {
         return dateTime.atZone(zoneId);
     }
-
-    public static String getZonedDateTimeStr(String localDateTimeStr, ZoneId zoneId) {
-        try {
-            return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatter);
-        }catch (Exception e) {
-            try {
-                return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs);
-            } catch (Exception e1) {
-                try {
-                    return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs6);
-                } catch (Exception e2) {
-                    return null;
-                }
-            }
-        }
-    }
-
     public static ZonedDateTime getZonedDateTime(String dateTimeStr, ZoneId zoneId) {
         try {
             return ZonedDateTime.parse(dateTimeStr, formatter).withZoneSameInstant(zoneId);
@@ -89,6 +72,38 @@ public class DateTimeUtil {
             }
         }
     }
+    public static String getZonedDateTimeStr(String localDateTimeStr, ZoneId zoneId) {
+        try {
+            return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatter);
+        }catch (Exception e) {
+            try {
+                return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs);
+            } catch (Exception e1) {
+                try {
+                    return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs6);
+                } catch (Exception e2) {
+                    return null;
+                }
+            }
+        }
+    }
+    public static String getZonedDateTimeStr(LocalDateTime localDateTime, ZoneId zoneId) {
+        try {
+            return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatter);
+        }catch (Exception e) {
+            try {
+                return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatterMs);
+            } catch (Exception e1) {
+                try {
+                    return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatterMs6);
+                } catch (Exception e2) {
+                    return null;
+                }
+            }
+        }
+    }
+
+
 
     public static String getLocalDateTimeStr(LocalDateTime dateTime) {
         return dateTime.format(formatter);
