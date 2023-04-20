@@ -55,7 +55,8 @@ public class DateTimeUtil {
     }
 
     public static ZonedDateTime getZonedDateTime(LocalDateTime dateTime, ZoneId zoneId) {
-        return ZonedDateTime.of(dateTime, zoneId);
+        ZonedDateTime zonedLocalDateTime = dateTime.atZone(ZoneId.systemDefault());
+        return zonedLocalDateTime.withZoneSameInstant(zoneId);
     }
     public static ZonedDateTime getZonedDateTime(String dateTimeStr, ZoneId zoneId) {
         try {
