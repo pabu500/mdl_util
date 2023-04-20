@@ -55,7 +55,7 @@ public class DateTimeUtil {
     }
 
     public static ZonedDateTime getZonedDateTime(LocalDateTime dateTime, ZoneId zoneId) {
-        return dateTime.atZone(zoneId);
+        return ZonedDateTime.of(dateTime, zoneId);
     }
     public static ZonedDateTime getZonedDateTime(String dateTimeStr, ZoneId zoneId) {
         try {
@@ -102,8 +102,6 @@ public class DateTimeUtil {
             }
         }
     }
-
-
 
     public static String getLocalDateTimeStr(LocalDateTime dateTime) {
         return dateTime.format(formatter);
