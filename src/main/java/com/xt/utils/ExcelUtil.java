@@ -98,6 +98,7 @@ public class ExcelUtil {
         try {
             workbook.write(outputStream);
             workbook.close();
+            outputStream.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
