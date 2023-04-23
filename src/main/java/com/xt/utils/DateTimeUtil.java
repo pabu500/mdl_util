@@ -108,6 +108,10 @@ public class DateTimeUtil {
         return dateTime.format(formatter);
     }
 
+    public static String getLocalDateTimeStr(LocalDateTime dateTime, String format) {
+        return dateTime.format(DateTimeFormatter.ofPattern(format));
+    }
+
     public static String getZonedDateTimeStr(LocalDateTime dateTime, String format, ZoneId zoneId) {
         return dateTime.atZone(zoneId).format(DateTimeFormatter.ofPattern(format));
     }
