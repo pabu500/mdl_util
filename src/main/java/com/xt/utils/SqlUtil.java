@@ -71,6 +71,12 @@ public class SqlUtil {
 
         sql.append(") VALUES (");
         for(String key : content.keySet()) {
+            if(content.get(key) instanceof Integer || content.get(key) instanceof Double) {
+                sql.append(" ").append(content.get(key)).append(",");
+            } else {
+                sql.append(" '").append(content.get(key)).append("',");
+            }
+
             sql.append(" '").append(content.get(key)).append("',");
         }
         sql.deleteCharAt(sql.length() - 1);
