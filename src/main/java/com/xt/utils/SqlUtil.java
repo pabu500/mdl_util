@@ -71,6 +71,11 @@ public class SqlUtil {
 
         sql.append(") VALUES (");
         for(String key : content.keySet()) {
+            if(content.get(key) == null) {
+                sql.append(" null,");
+                continue;
+            }
+
             if(content.get(key) instanceof Integer || content.get(key) instanceof Double) {
                 sql.append(" ").append(content.get(key)).append(",");
             } else {

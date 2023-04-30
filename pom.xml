@@ -6,7 +6,7 @@
 
     <groupId>com.xt</groupId>
     <artifactId>util</artifactId>
-    <version>1.10.4</version>
+    <version>1.10.5</version>
 
     <properties>
         <maven.compiler.source>20</maven.compiler.source>
