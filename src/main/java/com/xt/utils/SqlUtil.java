@@ -76,8 +76,7 @@ public class SqlUtil {
             } else {
                 sql.append(" '").append(content.get(key)).append("',");
             }
-
-            sql.append(" '").append(content.get(key)).append("',");
+            //sql.append(" '").append(content.get(key)).append("',");
         }
         sql.deleteCharAt(sql.length() - 1);
 
