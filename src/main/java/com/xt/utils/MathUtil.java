@@ -1,5 +1,7 @@
 package com.xt.utils;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,15 @@ public class MathUtil {
             return Integer.parseInt(obj.toString());
         }
         return ((Number) obj).intValue();
+    }
+
+    public static Double setDecimalPlaces(Double value, int decimalPlaces, RoundingMode roundingMode) {
+        if (value == null) {
+            return null;
+        }
+        DecimalFormat df = new DecimalFormat("#." + "#".repeat(Math.max(0, decimalPlaces)));
+        df.setRoundingMode(roundingMode);
+        return Double.parseDouble(df.format(value));
     }
 
     public static double findMax(List<Double> numbers) {
