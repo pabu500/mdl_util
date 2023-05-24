@@ -3,7 +3,7 @@ package com.xt.utils;
 import java.util.Map;
 
 public class SqlUtil {
-    public static Map<String, String> makeSelectSql(Map<String, String> sqlMap) {
+    public static Map<String, String> makeSelectSql(Map<String, Object> sqlMap) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
         if(sqlMap.get("select") != null) {
@@ -22,6 +22,17 @@ public class SqlUtil {
         String targetConstraint = "";
         if(sqlMap.get("target_key") != null) {
             targetConstraint = sqlMap.get("target_key") + " = '" + sqlMap.get("target_value") + "'";
+        }else{
+            //multiple target
+            if(sqlMap.get("targets") != null){
+                if(sqlMap.get("targets") instanceof Map<?,?>){
+                    Map<String, String> targets = (Map<String, String>) sqlMap.get("targets");
+                    for(String key : targets.keySet()){
+                        targetConstraint += key + " = '" + targets.get(key) + "' AND ";
+                    }
+                    targetConstraint = targetConstraint.substring(0, targetConstraint.length()-5);
+                }
+            }
         }
 
         String timeConstraint = "";
@@ -41,7 +52,7 @@ public class SqlUtil {
             sql.append(" ORDER BY ").append(sqlMap.get("time_key")).append(" DESC");
         }
 
-        String limit = sqlMap.get("limit");
+        String limit = sqlMap.get("limit").toString();
         if(limit != null) {
             sql.append(" LIMIT ").append(limit);
         }
