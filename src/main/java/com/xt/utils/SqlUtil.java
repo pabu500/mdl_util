@@ -37,7 +37,17 @@ public class SqlUtil {
 
         String timeConstraint = "";
         if(sqlMap.get("time_key") != null) {
-            timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
+            if(sqlMap.get("start_datetime")!=null){
+                timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime");
+            }
+            if(sqlMap.get("end_datetime")!=null){
+                if(timeConstraint.equals("")){
+                    timeConstraint = sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
+                }else{
+                    timeConstraint += "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
+                }
+            }
+//            timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
         }
 
         if(!targetConstraint.equals("") && !timeConstraint.equals("")) {
