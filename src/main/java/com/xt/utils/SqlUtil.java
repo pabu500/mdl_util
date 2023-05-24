@@ -27,10 +27,12 @@ public class SqlUtil {
             if(sqlMap.get("targets") != null){
                 if(sqlMap.get("targets") instanceof Map<?,?>){
                     Map<String, String> targets = (Map<String, String>) sqlMap.get("targets");
-                    for(String key : targets.keySet()){
-                        targetConstraint += key + " = '" + targets.get(key) + "' AND ";
+                    if(!targets.keySet().isEmpty()) {
+                        for (String key : targets.keySet()) {
+                            targetConstraint += key + " = '" + targets.get(key) + "' AND ";
+                        }
+                        targetConstraint = targetConstraint.substring(0, targetConstraint.length() - 5);
                     }
-                    targetConstraint = targetConstraint.substring(0, targetConstraint.length()-5);
                 }
             }
         }
