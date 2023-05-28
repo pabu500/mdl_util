@@ -88,4 +88,13 @@ public class MathUtil {
         }
         return dominantLong;
     }
+
+    public static double findStandardDiv(List<Double> numbers) {
+        double mean = findAverage(numbers);
+        double sum = 0;
+        for (double number : numbers) {
+            sum += Math.pow(number - mean, 2);
+        }
+        return Math.sqrt(sum / numbers.size());
+    }
 }
