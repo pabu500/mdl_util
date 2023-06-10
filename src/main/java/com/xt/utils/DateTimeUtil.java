@@ -126,4 +126,8 @@ public class DateTimeUtil {
     public static LocalDateTime getZonedLocalDateTimeFromSystemLocalDateTime(LocalDateTime systemLocalDateTime, ZoneId zoneId) {
         return systemLocalDateTime.atZone(java.time.ZoneId.systemDefault()).withZoneSameInstant(zoneId).toLocalDateTime();
     }
+
+    public static String getSgNow() {
+        return getZonedDateTimeStr(LocalDateTime.now(), ZoneId.of("Asia/Singapore"));
+    }
 }
