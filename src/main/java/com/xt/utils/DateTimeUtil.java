@@ -130,4 +130,8 @@ public class DateTimeUtil {
     public static String getSgNowStr() {
         return getZonedDateTimeStr(LocalDateTime.now(), ZoneId.of("Asia/Singapore"));
     }
+
+    public static String getSgNowStrMs() {
+        return getZonedDateTime(LocalDateTime.now(), ZoneId.of("Asia/Singapore")).format(formatterMs);
+    }
 }
