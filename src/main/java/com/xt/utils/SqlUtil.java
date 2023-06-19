@@ -88,9 +88,9 @@ public class SqlUtil {
             return Map.of("error", "Missing table name");
         }
 
-        String targetConstraint = "";
+        StringBuilder targetConstraint = new StringBuilder();
         if(sqlMap.get("target_key") != null) {
-            targetConstraint = sqlMap.get("target_key") + " like '%" + sqlMap.get("target_value") + "%'";
+            targetConstraint = new StringBuilder(sqlMap.get("target_key") + " like '%" + sqlMap.get("target_value") + "%'");
         }else{
             //multiple target
             if(sqlMap.get("targets") != null){
@@ -98,9 +98,9 @@ public class SqlUtil {
                     Map<String, String> targets = (Map<String, String>) sqlMap.get("targets");
                     if(!targets.keySet().isEmpty()) {
                         for (String key : targets.keySet()) {
-                            targetConstraint += key + " = '" + targets.get(key) + "' AND ";
+                            targetConstraint.append(key).append(" like '%").append(targets.get(key)).append("%' AND ");
                         }
-                        targetConstraint = targetConstraint.substring(0, targetConstraint.length() - 5);
+                        targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
                     }
                 }
             }
@@ -121,9 +121,9 @@ public class SqlUtil {
 //            timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
         }
 
-        if(!targetConstraint.equals("") && !timeConstraint.equals("")) {
+        if(!targetConstraint.toString().equals("") && !timeConstraint.equals("")) {
             sql.append(" WHERE ").append(targetConstraint).append(" AND ").append(timeConstraint);
-        } else if(!targetConstraint.equals("")) {
+        } else if(!targetConstraint.toString().equals("")) {
             sql.append(" WHERE ").append(targetConstraint);
         } else if(!timeConstraint.equals("")) {
             sql.append(" WHERE ").append(timeConstraint);
