@@ -106,4 +106,12 @@ public class MathUtil {
         }
         return Math.sqrt(sum / numbers.size());
     }
+
+    public static String genRandomNumStr(int len) {
+        StringBuilder str = new StringBuilder();
+        for (int i = 0; i < len; i++) {
+            str.append((int) (Math.random() * 10));
+        }
+        return str.toString();
+    }
 }
