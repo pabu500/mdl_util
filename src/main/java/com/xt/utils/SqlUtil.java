@@ -122,6 +122,22 @@ public class SqlUtil {
             }
         }
 
+        if(sqlMap.get("is_not_null") != null) {
+            if(targetConstraint.toString().equals("")) {
+                targetConstraint = new StringBuilder(sqlMap.get("is_not_null") + " IS NOT NULL");
+            } else {
+                targetConstraint.append(" AND ").append(sqlMap.get("is_not_null")).append(" IS NOT NULL");
+            }
+        }
+
+        if(sqlMap.get("is_not_empty") != null) {
+            if(targetConstraint.toString().equals("")) {
+                targetConstraint = new StringBuilder(sqlMap.get("is_not_empty") + " != ''");
+            } else {
+                targetConstraint.append(" AND ").append(sqlMap.get("is_not_empty")).append(" != ''");
+            }
+        }
+
         String timeConstraint = "";
         if(sqlMap.get("time_key") != null) {
             if(sqlMap.get("start_datetime")!=null){
