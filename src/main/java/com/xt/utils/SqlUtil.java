@@ -111,9 +111,14 @@ public class SqlUtil {
             //multiple target
             if(sqlMap.get("targets") != null){
                 if(sqlMap.get("targets") instanceof Map<?,?>){
-                    Map<String, String> targets = (Map<String, String>) sqlMap.get("targets");
+                    Map<String, Object> targets = (Map<String, Object>) sqlMap.get("targets");
                     if(!targets.keySet().isEmpty()) {
                         for (String key : targets.keySet()) {
+                            Object value = targets.get(key);
+                            if(value instanceof Integer || value instanceof Double){
+                                targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
+                                continue;
+                            }
                             targetConstraint.append(key).append(" like '%").append(targets.get(key)).append("%' AND ");
                         }
                         targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
