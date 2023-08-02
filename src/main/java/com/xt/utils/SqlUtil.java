@@ -218,4 +218,36 @@ public class SqlUtil {
 
         return Map.of("sql", sql.toString());
     }
+
+    public static Map<String, String> makeUpdateSql(Map<String, Object> sqlMap){
+        StringBuilder sql = new StringBuilder();
+        sql.append("UPDATE ");
+        if(sqlMap.get("table") != null) {
+            sql.append(sqlMap.get("table"));
+        } else {
+            return Map.of("error", "Missing table name");
+        }
+
+        Map<String, Object> content = (Map<String, Object>) sqlMap.get("content");
+        if(content == null) {
+            return Map.of("error", "Missing content");
+        }
+
+        sql.append(" SET ");
+        for(String key : content.keySet()) {
+            if(content.get(key) == null) {
+                sql.append(" ").append(key).append(" = null,");
+                continue;
+            }
+
+            if(content.get(key) instanceof Integer || content.get(key) instanceof Double) {
+                sql.append(" ").append(key).append(" = ").append(content.get(key)).append(",");
+            } else {
+                sql.append(" ").append(key).append(" = '").append(content.get(key)).append("',");
+            }
+        }
+        sql.deleteCharAt(sql.length() - 1);
+
+        return Map.of("sql", sql.toString());
+    }
 }
