@@ -248,6 +248,27 @@ public class SqlUtil {
         }
         sql.deleteCharAt(sql.length() - 1);
 
+        StringBuilder targetConstraint = new StringBuilder();
+        if(sqlMap.get("target_key") != null) {
+            targetConstraint = new StringBuilder(sqlMap.get("target_key") + " = '" + sqlMap.get("target_value") + "'");
+        }else{
+            //multiple target
+            if(sqlMap.get("targets") != null){
+                if(sqlMap.get("targets") instanceof Map<?,?>){
+                    Map<String, String> targets = (Map<String, String>) sqlMap.get("targets");
+                    if(!targets.keySet().isEmpty()) {
+                        for (String key : targets.keySet()) {
+                            targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
+                        }
+                        targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
+                    }
+                }
+            }
+        }
+        if(!targetConstraint.toString().equals("")) {
+            sql.append(" WHERE ").append(targetConstraint);
+        }
+
         return Map.of("sql", sql.toString());
     }
 }
