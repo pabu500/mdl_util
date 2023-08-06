@@ -123,12 +123,13 @@ public class SqlUtil {
                                 }else {
                                     continue;
                                 }
+                            }else {
+                                if (value instanceof Integer || value instanceof Double) {
+                                    targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
+                                    continue;
+                                }
+                                targetConstraint.append(key).append(" like '%").append(targets.get(key)).append("%' AND ");
                             }
-                            if(value instanceof Integer || value instanceof Double){
-                                targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
-                                continue;
-                            }
-                            targetConstraint.append(key).append(" like '%").append(targets.get(key)).append("%' AND ");
                         }
                         targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
                     }
