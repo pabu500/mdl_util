@@ -105,6 +105,8 @@ public class SqlUtil {
         }
 
         StringBuilder targetConstraint = new StringBuilder();
+        boolean includeNullValue = sqlMap.get("include_null_value") != null && sqlMap.get("include_null_value").equals("true");
+
         if(sqlMap.get("target_key") != null) {
             targetConstraint = new StringBuilder(sqlMap.get("target_key") + " like '%" + sqlMap.get("target_value") + "%'");
         }else{
@@ -115,6 +117,13 @@ public class SqlUtil {
                     if(!targets.keySet().isEmpty()) {
                         for (String key : targets.keySet()) {
                             Object value = targets.get(key);
+                            if(value == null ){
+                                if(includeNullValue){
+                                    targetConstraint.append(key).append(" IS NULL AND ");
+                                }else {
+                                    continue;
+                                }
+                            }
                             if(value instanceof Integer || value instanceof Double){
                                 targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
                                 continue;
