@@ -128,6 +128,12 @@ public class SqlUtil {
                                     targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
                                     continue;
                                 }
+                                if(value instanceof String){
+                                    if(((String) value).isEmpty()) {
+                                        targetConstraint.append(key).append(" = '' AND ");
+                                        continue;
+                                    }
+                                }
                                 targetConstraint.append(key).append(" like '%").append(targets.get(key)).append("%' AND ");
                             }
                         }
