@@ -71,7 +71,22 @@ public class MathUtil {
         }
         return max;
     }
-
+    public static double findTotal(List<Double> numbers) {
+        double sum = 0;
+        for (double number : numbers) {
+            sum += number;
+        }
+        return sum;
+    }
+    public static long findPositiveCount(List<Double> numbers) {
+        long count = 0;
+        for (double number : numbers) {
+            if (number > 0) {
+                count++;
+            }
+        }
+        return count;
+    }
     public static double findAverage(List<Double> numbers) {
         double sum = 0;
         for (double number : numbers) {
