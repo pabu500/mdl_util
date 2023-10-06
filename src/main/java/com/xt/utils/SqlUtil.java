@@ -215,13 +215,13 @@ public class SqlUtil {
         boolean includeNullValue = sqlMap.get("include_null_value") != null && sqlMap.get("include_null_value").equals("true");
 
         //by default, use key = value
-        if(sqlMap.get("target_key") != null) {
+        if(sqlMap.get("target_key") != null && sqlMap.get("target_value") != null) {
             targetConstraint = new StringBuilder(sqlMap.get("target_key") + " = '" + sqlMap.get("target_value") + "'");
         }else{
             //multiple target
-            if(sqlMap.get("target_keys") != null){
-                if(sqlMap.get("target_keys") instanceof Map<?,?>){
-                    Map<String, String> targets = (Map<String, String>) sqlMap.get("target_keys");
+            if(sqlMap.get("targets") != null){
+                if(sqlMap.get("targets") instanceof Map<?,?>){
+                    Map<String, String> targets = (Map<String, String>) sqlMap.get("targets");
                     if(!targets.keySet().isEmpty()) {
                         for (String key : targets.keySet()) {
                             targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
@@ -232,18 +232,16 @@ public class SqlUtil {
             }
         }
 
-        Map<String, Object> likeTargetKeys = (Map<String, Object>) sqlMap.get("like_target_keys");
-
-        if(sqlMap.get("like_target_key") != null) {
+        if(sqlMap.get("like_target_key") != null && sqlMap.get("like_target_value") != null) {
             targetConstraint = new StringBuilder(sqlMap.get("like_target_key") + " like '%" + sqlMap.get("like_target_value") + "%'");
         }else{
             //multiple target
-            if(sqlMap.get("like_target_keys") != null){
-                if(sqlMap.get("like_target_keys") instanceof Map<?,?>){
-                    Map<String, Object> targets = (Map<String, Object>) sqlMap.get("like_target_keys");
-                    if(!targets.keySet().isEmpty()) {
-                        for (String key : targets.keySet()) {
-                            Object value = targets.get(key);
+            if(sqlMap.get("like_targets") != null){
+                if(sqlMap.get("like_targets") instanceof Map<?,?>){
+                    Map<String, Object> likeTargets = (Map<String, Object>) sqlMap.get("like_targets");
+                    if(!likeTargets.keySet().isEmpty()) {
+                        for (String key : likeTargets.keySet()) {
+                            Object value = likeTargets.get(key);
                             if(value == null ){
                                 if(includeNullValue){
                                     targetConstraint.append(key).append(" IS NULL AND ");
@@ -252,7 +250,7 @@ public class SqlUtil {
                                 }
                             }else {
                                 if (value instanceof Integer || value instanceof Double) {
-                                    targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
+                                    targetConstraint.append(key).append(" = ").append(likeTargets.get(key)).append(" AND ");
                                     continue;
                                 }
                                 if(value instanceof String){
@@ -261,7 +259,7 @@ public class SqlUtil {
                                         continue;
                                     }
                                 }
-                                targetConstraint.append(key).append(" like '%").append(targets.get(key)).append("%' AND ");
+                                targetConstraint.append(key).append(" like '%").append(likeTargets.get(key)).append("%' AND ");
                             }
                         }
                         targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
