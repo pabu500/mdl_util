@@ -38,7 +38,7 @@ public class SqlUtil {
         }
 
         if(sqlMap.get("is_not_null") != null) {
-            if(targetConstraint.toString().equals("")) {
+            if(targetConstraint.toString().isEmpty()) {
                 targetConstraint = new StringBuilder(sqlMap.get("is_not_null") + " IS NOT NULL");
             } else {
                 targetConstraint.append(" AND ").append(sqlMap.get("is_not_null")).append(" IS NOT NULL");
@@ -59,7 +59,7 @@ public class SqlUtil {
                 timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime");
             }
             if(sqlMap.get("end_datetime")!=null){
-                if(timeConstraint.equals("")){
+                if(timeConstraint.isEmpty()){
                     timeConstraint = sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
                 }else{
                     timeConstraint += "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
@@ -68,11 +68,11 @@ public class SqlUtil {
 //            timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
         }
 
-        if(!targetConstraint.toString().equals("") && !timeConstraint.equals("")) {
+        if(!targetConstraint.toString().isEmpty() && !timeConstraint.isEmpty()) {
             sql.append(" WHERE ").append(targetConstraint).append(" AND ").append(timeConstraint);
-        } else if(!targetConstraint.toString().equals("")) {
+        } else if(!targetConstraint.toString().isEmpty()) {
             sql.append(" WHERE ").append(targetConstraint);
-        } else if(!timeConstraint.equals("")) {
+        } else if(!timeConstraint.isEmpty()) {
             sql.append(" WHERE ").append(timeConstraint);
         }
 
@@ -144,7 +144,7 @@ public class SqlUtil {
         }
 
         if(sqlMap.get("is_not_null") != null) {
-            if(targetConstraint.toString().equals("")) {
+            if(targetConstraint.toString().isEmpty()) {
                 targetConstraint = new StringBuilder(sqlMap.get("is_not_null") + " IS NOT NULL");
             } else {
                 targetConstraint.append(" AND ").append(sqlMap.get("is_not_null")).append(" IS NOT NULL");
@@ -152,7 +152,7 @@ public class SqlUtil {
         }
 
         if(sqlMap.get("is_not_empty") != null) {
-            if(targetConstraint.toString().equals("")) {
+            if(targetConstraint.toString().isEmpty()) {
                 targetConstraint = new StringBuilder(sqlMap.get("is_not_empty") + " != ''");
             } else {
                 targetConstraint.append(" AND ").append(sqlMap.get("is_not_empty")).append(" != ''");
@@ -165,7 +165,7 @@ public class SqlUtil {
                 timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime");
             }
             if(sqlMap.get("end_datetime")!=null){
-                if(timeConstraint.equals("")){
+                if(timeConstraint.isEmpty()){
                     timeConstraint = sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
                 }else{
                     timeConstraint += "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
@@ -174,11 +174,138 @@ public class SqlUtil {
 //            timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
         }
 
-        if(!targetConstraint.toString().equals("") && !timeConstraint.equals("")) {
+        if(!targetConstraint.toString().isEmpty() && !timeConstraint.isEmpty()) {
             sql.append(" WHERE ").append(targetConstraint).append(" AND ").append(timeConstraint);
-        } else if(!targetConstraint.toString().equals("")) {
+        } else if(!targetConstraint.toString().isEmpty()) {
             sql.append(" WHERE ").append(targetConstraint);
-        } else if(!timeConstraint.equals("")) {
+        } else if(!timeConstraint.isEmpty()) {
+            sql.append(" WHERE ").append(timeConstraint);
+        }
+
+        if(sqlMap.get("time_key")!=null){
+            sql.append(" ORDER BY ").append(sqlMap.get("time_key")).append(" DESC");
+        }
+
+        String limit = sqlMap.get("limit").toString();
+        if(limit != null) {
+            sql.append(" LIMIT ").append(limit);
+        }
+
+        return Map.of("sql", sql.toString());
+    }
+
+    //mix select '=' and select 'like'
+    public static Map<String, String> makeSelectSql2(Map<String, Object> sqlMap) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ");
+        if(sqlMap.get("select") != null) {
+            sql.append(sqlMap.get("select"));
+        } else {
+            sql.append("*");
+        }
+
+        sql.append(" FROM ");
+        if(sqlMap.get("from") != null) {
+            sql.append(sqlMap.get("from"));
+        } else {
+            return Map.of("error", "Missing table name");
+        }
+
+        StringBuilder targetConstraint = new StringBuilder();
+        boolean includeNullValue = sqlMap.get("include_null_value") != null && sqlMap.get("include_null_value").equals("true");
+
+        //by default, use key = value
+        if(sqlMap.get("target_key") != null) {
+            targetConstraint = new StringBuilder(sqlMap.get("target_key") + " = '" + sqlMap.get("target_value") + "'");
+        }else{
+            //multiple target
+            if(sqlMap.get("target_keys") != null){
+                if(sqlMap.get("target_keys") instanceof Map<?,?>){
+                    Map<String, String> targets = (Map<String, String>) sqlMap.get("target_keys");
+                    if(!targets.keySet().isEmpty()) {
+                        for (String key : targets.keySet()) {
+                            targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
+                        }
+                        targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
+                    }
+                }
+            }
+        }
+
+        Map<String, Object> likeTargetKeys = (Map<String, Object>) sqlMap.get("like_target_keys");
+
+        if(sqlMap.get("like_target_key") != null) {
+            targetConstraint = new StringBuilder(sqlMap.get("like_target_key") + " like '%" + sqlMap.get("like_target_value") + "%'");
+        }else{
+            //multiple target
+            if(sqlMap.get("like_target_keys") != null){
+                if(sqlMap.get("like_target_keys") instanceof Map<?,?>){
+                    Map<String, Object> targets = (Map<String, Object>) sqlMap.get("like_target_keys");
+                    if(!targets.keySet().isEmpty()) {
+                        for (String key : targets.keySet()) {
+                            Object value = targets.get(key);
+                            if(value == null ){
+                                if(includeNullValue){
+                                    targetConstraint.append(key).append(" IS NULL AND ");
+                                }else {
+                                    continue;
+                                }
+                            }else {
+                                if (value instanceof Integer || value instanceof Double) {
+                                    targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
+                                    continue;
+                                }
+                                if(value instanceof String){
+                                    if(((String) value).isEmpty()) {
+                                        targetConstraint.append(key).append(" = '' AND ");
+                                        continue;
+                                    }
+                                }
+                                targetConstraint.append(key).append(" like '%").append(targets.get(key)).append("%' AND ");
+                            }
+                        }
+                        targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
+                    }
+                }
+            }
+        }
+
+        if(sqlMap.get("is_not_null") != null) {
+            if(targetConstraint.toString().isEmpty()) {
+                targetConstraint = new StringBuilder(sqlMap.get("is_not_null") + " IS NOT NULL");
+            } else {
+                targetConstraint.append(" AND ").append(sqlMap.get("is_not_null")).append(" IS NOT NULL");
+            }
+        }
+
+        if(sqlMap.get("is_not_empty") != null) {
+            if(targetConstraint.toString().isEmpty()) {
+                targetConstraint = new StringBuilder(sqlMap.get("is_not_empty") + " != ''");
+            } else {
+                targetConstraint.append(" AND ").append(sqlMap.get("is_not_empty")).append(" != ''");
+            }
+        }
+
+        String timeConstraint = "";
+        if(sqlMap.get("time_key") != null) {
+            if(sqlMap.get("start_datetime")!=null){
+                timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime");
+            }
+            if(sqlMap.get("end_datetime")!=null){
+                if(timeConstraint.isEmpty()){
+                    timeConstraint = sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
+                }else{
+                    timeConstraint += "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
+                }
+            }
+//            timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
+        }
+
+        if(!targetConstraint.toString().isEmpty() && !timeConstraint.isEmpty()) {
+            sql.append(" WHERE ").append(targetConstraint).append(" AND ").append(timeConstraint);
+        } else if(!targetConstraint.toString().isEmpty()) {
+            sql.append(" WHERE ").append(targetConstraint);
+        } else if(!timeConstraint.isEmpty()) {
             sql.append(" WHERE ").append(timeConstraint);
         }
 
@@ -254,7 +381,7 @@ public class SqlUtil {
             }
         }
         //disable wildcard update for data security
-        if(targetConstraint.toString().equals("")){
+        if(targetConstraint.toString().isEmpty()){
             return Map.of("error", "Missing target constraint");
         }
 
