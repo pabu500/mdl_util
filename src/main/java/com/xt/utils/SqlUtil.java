@@ -311,9 +311,8 @@ public class SqlUtil {
             sql.append(" ORDER BY ").append(sqlMap.get("time_key")).append(" DESC");
         }
 
-        String limit = sqlMap.get("limit").toString();
-        if(limit != null) {
-            sql.append(" LIMIT ").append(limit);
+        if(sqlMap.get("limit") != null) {
+            sql.append(" LIMIT ").append(sqlMap.get("limit"));
         }
 
         return Map.of("sql", sql.toString());
