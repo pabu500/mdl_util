@@ -233,7 +233,7 @@ public class SqlUtil {
         }
 
         if(sqlMap.get("like_target_key") != null && sqlMap.get("like_target_value") != null) {
-            targetConstraint = new StringBuilder(sqlMap.get("like_target_key") + " like '%" + sqlMap.get("like_target_value") + "%'");
+            targetConstraint = new StringBuilder(sqlMap.get("like_target_key") + " ilike '%" + sqlMap.get("like_target_value") + "%'");
         }else{
             //multiple target
             if(sqlMap.get("like_targets") != null){
@@ -259,7 +259,7 @@ public class SqlUtil {
                                         continue;
                                     }
                                 }
-                                targetConstraint.append(key).append(" like '%").append(likeTargets.get(key)).append("%' AND ");
+                                targetConstraint.append(key).append(" ilike '%").append(likeTargets.get(key)).append("%' AND ");
                             }
                         }
                         targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
