@@ -253,10 +253,15 @@ public class SqlUtil {
         }
 
         if(sqlMap.get("like_target_key") != null && sqlMap.get("like_target_value") != null) {
-            targetConstraint = new StringBuilder(sqlMap.get("like_target_key") + " ilike '%" + sqlMap.get("like_target_value") + "%'");
+            if(targetConstraint.toString().isEmpty()) {
+                targetConstraint = new StringBuilder(sqlMap.get("like_target_key") + " ilike '%" + sqlMap.get("like_target_value") + "%'");
+            } else {
+                targetConstraint.append(" AND ").append(sqlMap.get("like_target_key")).append(" ilike '%").append(sqlMap.get("like_target_value")).append("%'");
+            }
         }else{
             //multiple target
             if(sqlMap.get("like_targets") != null){
+                StringBuilder likeTargetConstraint = new StringBuilder();
                 if(sqlMap.get("like_targets") instanceof Map<?,?>){
                     Map<String, Object> likeTargets = (Map<String, Object>) sqlMap.get("like_targets");
                     if(!likeTargets.keySet().isEmpty()) {
@@ -264,26 +269,31 @@ public class SqlUtil {
                             Object value = likeTargets.get(key);
                             if(value == null ){
                                 if(includeNullValue){
-                                    targetConstraint.append(key).append(" IS NULL AND ");
+                                    likeTargetConstraint.append(key).append(" IS NULL AND ");
                                 }else {
                                     continue;
                                 }
                             }else {
                                 if (value instanceof Integer || value instanceof Double) {
-                                    targetConstraint.append(key).append(" = ").append(likeTargets.get(key)).append(" AND ");
+                                    likeTargetConstraint.append(key).append(" = ").append(likeTargets.get(key)).append(" AND ");
                                     continue;
                                 }
                                 if(value instanceof String){
                                     if(((String) value).isEmpty()) {
-                                        targetConstraint.append(key).append(" = '' AND ");
+                                        likeTargetConstraint.append(key).append(" = '' AND ");
                                         continue;
                                     }
                                 }
-                                targetConstraint.append(key).append(" ilike '%").append(likeTargets.get(key)).append("%' AND ");
+                                likeTargetConstraint.append(key).append(" ilike '%").append(likeTargets.get(key)).append("%' AND ");
                             }
                         }
-                        targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
+                        likeTargetConstraint = new StringBuilder(likeTargetConstraint.substring(0, likeTargetConstraint.length() - 5));
                     }
+                }
+                if(targetConstraint.toString().isEmpty()) {
+                    targetConstraint = likeTargetConstraint;
+                } else {
+                    targetConstraint.append(" AND ").append(likeTargetConstraint);
                 }
             }
         }
