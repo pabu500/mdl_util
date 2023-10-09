@@ -261,9 +261,11 @@ public class SqlUtil {
         }else{
             //multiple target
             if(sqlMap.get("like_targets") != null){
-                StringBuilder likeTargetConstraint = new StringBuilder();
+
                 if(sqlMap.get("like_targets") instanceof Map<?,?>){
+                    StringBuilder likeTargetConstraint = new StringBuilder();
                     Map<String, Object> likeTargets = (Map<String, Object>) sqlMap.get("like_targets");
+
                     if(!likeTargets.keySet().isEmpty()) {
                         for (String key : likeTargets.keySet()) {
                             Object value = likeTargets.get(key);
@@ -288,12 +290,12 @@ public class SqlUtil {
                             }
                         }
                         likeTargetConstraint = new StringBuilder(likeTargetConstraint.substring(0, likeTargetConstraint.length() - 5));
+                        if(targetConstraint.toString().isEmpty()) {
+                            targetConstraint = likeTargetConstraint;
+                        } else {
+                            targetConstraint.append(" AND ").append(likeTargetConstraint);
+                        }
                     }
-                }
-                if(targetConstraint.toString().isEmpty()) {
-                    targetConstraint = likeTargetConstraint;
-                } else {
-                    targetConstraint.append(" AND ").append(likeTargetConstraint);
                 }
             }
         }
