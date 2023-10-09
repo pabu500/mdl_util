@@ -346,6 +346,9 @@ public class SqlUtil {
         if(sqlMap.get("limit") != null) {
             sql.append(" LIMIT ").append(sqlMap.get("limit"));
         }
+        if(sqlMap.get("offset") != null) {
+            sql.append(" OFFSET ").append(sqlMap.get("offset"));
+        }
 
         return Map.of("sql", sql.toString());
     }
