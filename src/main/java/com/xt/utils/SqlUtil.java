@@ -46,7 +46,7 @@ public class SqlUtil {
         }
 
         if(sqlMap.get("is_not_empty") != null) {
-            if(targetConstraint.toString().equals("")) {
+            if(targetConstraint.toString().isEmpty()) {
                 targetConstraint = new StringBuilder(sqlMap.get("is_not_empty") + " != ''");
             } else {
                 targetConstraint.append(" AND ").append(sqlMap.get("is_not_empty")).append(" != ''");
@@ -221,10 +221,30 @@ public class SqlUtil {
             //multiple target
             if(sqlMap.get("targets") != null){
                 if(sqlMap.get("targets") instanceof Map<?,?>){
-                    Map<String, String> targets = (Map<String, String>) sqlMap.get("targets");
+                    Map<String, Object> targets = (Map<String, Object>) sqlMap.get("targets");
                     if(!targets.keySet().isEmpty()) {
                         for (String key : targets.keySet()) {
-                            targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
+//                            targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
+                            Object value = targets.get(key);
+                            if(value == null ) {
+                                if (includeNullValue) {
+                                    targetConstraint.append(key).append(" IS NULL AND ");
+                                } else {
+                                    continue;
+                                }
+                            }else {
+                                if (value instanceof Integer || value instanceof Double) {
+                                    targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
+                                    continue;
+                                }
+                                if(value instanceof String){
+                                    if(((String) value).isEmpty()) {
+                                        targetConstraint.append(key).append(" = '' AND ");
+                                        continue;
+                                    }
+                                }
+                                targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
+                            }
                         }
                         targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
                     }
