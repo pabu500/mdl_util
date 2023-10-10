@@ -352,8 +352,10 @@ public class SqlUtil {
             if(sort.get("sort_order") != null){
                 sql.append(" ").append(sort.get("sort_order"));
             }
+            sql.append(" NULLS LAST");
         }else if(sqlMap.get("time_key")!=null){
             sql.append(" ORDER BY ").append(sqlMap.get("time_key")).append(" DESC");
+            sql.append(" NULLS LAST");
         }
 
         if(sqlMap.get("limit") != null) {
