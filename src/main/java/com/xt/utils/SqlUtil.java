@@ -339,13 +339,18 @@ public class SqlUtil {
             sql.append(" WHERE ").append(timeConstraint);
         }
 
-        if(sqlMap.get("sort") != null){
+        boolean hasSort = false;
+        if(sqlMap.get("sort") != null && sqlMap.get("sort") instanceof Map<?,?>) {
             Map<String, Object> sort = (Map<String, Object>) sqlMap.get("sort");
-            if(sort.get("sort_by") != null){
-                sql.append(" ORDER BY ").append(sort.get("sort_by"));
-                if(sort.get("sort_order") != null){
-                    sql.append(" ").append(sort.get("sort_order"));
-                }
+            if(sort.containsKey("sort_by") && sort.containsKey("sort_order")){
+                hasSort = true;
+            }
+        }
+        if(hasSort){
+            Map<String, Object> sort = (Map<String, Object>) sqlMap.get("sort");
+            sql.append(" ORDER BY ").append(sort.get("sort_by"));
+            if(sort.get("sort_order") != null){
+                sql.append(" ").append(sort.get("sort_order"));
             }
         }else if(sqlMap.get("time_key")!=null){
             sql.append(" ORDER BY ").append(sqlMap.get("time_key")).append(" DESC");
