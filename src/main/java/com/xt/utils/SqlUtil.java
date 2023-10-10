@@ -341,6 +341,14 @@ public class SqlUtil {
 
         if(sqlMap.get("time_key")!=null){
             sql.append(" ORDER BY ").append(sqlMap.get("time_key")).append(" DESC");
+        }else if(sqlMap.get("sort") != null){
+            Map<String, Object> sort = (Map<String, Object>) sqlMap.get("sort");
+            if(sort.get("sort_by") != null){
+                sql.append(" ORDER BY ").append(sort.get("sort_by"));
+                if(sort.get("sort_order") != null){
+                    sql.append(" ").append(sort.get("sort_order"));
+                }
+            }
         }
 
         if(sqlMap.get("limit") != null) {
