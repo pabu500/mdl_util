@@ -339,9 +339,9 @@ public class SqlUtil {
             sql.append(" WHERE ").append(timeConstraint);
         }
 
-        if(sqlMap.get("time_key")!=null){
+        if(sqlMap.get("sort") != null){
             sql.append(" ORDER BY ").append(sqlMap.get("time_key")).append(" DESC");
-        }else if(sqlMap.get("sort") != null){
+        }else if(sqlMap.get("time_key")!=null){
             Map<String, Object> sort = (Map<String, Object>) sqlMap.get("sort");
             if(sort.get("sort_by") != null){
                 sql.append(" ORDER BY ").append(sort.get("sort_by"));
