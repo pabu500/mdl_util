@@ -300,6 +300,14 @@ public class SqlUtil {
             }
         }
 
+        if(sqlMap.get("idInConstraint") != null) {
+            if(targetConstraint.toString().isEmpty()) {
+                targetConstraint = new StringBuilder((String) sqlMap.get("idInConstraint"));
+            } else {
+                targetConstraint.append(" AND ").append(sqlMap.get("idInConstraint"));
+            }
+        }
+
         if(sqlMap.get("is_not_null") != null) {
             if(targetConstraint.toString().isEmpty()) {
                 targetConstraint = new StringBuilder(sqlMap.get("is_not_null") + " IS NOT NULL");
