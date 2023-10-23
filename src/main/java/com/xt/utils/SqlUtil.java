@@ -301,10 +301,13 @@ public class SqlUtil {
         }
 
         if(sqlMap.get("idInConstraint") != null) {
-            if(targetConstraint.toString().isEmpty()) {
-                targetConstraint = new StringBuilder((String) sqlMap.get("idInConstraint"));
-            } else {
-                targetConstraint.append(" AND ").append(sqlMap.get("idInConstraint"));
+            String idInConstraint = (String) sqlMap.get("idInConstraint");
+            if(!idInConstraint.isEmpty()) {
+                if (targetConstraint.toString().isEmpty()) {
+                    targetConstraint = new StringBuilder((String) sqlMap.get("idInConstraint"));
+                } else {
+                    targetConstraint.append(" AND ").append(sqlMap.get("idInConstraint"));
+                }
             }
         }
 
