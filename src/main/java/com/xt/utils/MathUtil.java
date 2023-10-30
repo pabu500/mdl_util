@@ -104,6 +104,15 @@ public class MathUtil {
         }
         return sum / numbers.size();
     }
+    public static double findMedian(List<Double> numbers) {
+        numbers.sort(Double::compareTo);
+        int size = numbers.size();
+        if (size % 2 == 0) {
+            return (numbers.get(size / 2 - 1) + numbers.get(size / 2)) / 2;
+        } else {
+            return numbers.get(size / 2);
+        }
+    }
 
     public static Long findDominantLong(List<Double> numbers) {
         Map<Long, Integer> frequencyMap = new HashMap<>();
