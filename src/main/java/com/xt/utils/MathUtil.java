@@ -62,6 +62,16 @@ public class MathUtil {
         }
         return min;
     }
+    public static double findMinNonZero(List<Double> numbers) {
+        double min = numbers.get(0);
+        for (double number : numbers) {
+            if (number < min && number != 0) {
+                min = number;
+            }
+        }
+        return min;
+    }
+
     public static double findMax(List<Double> numbers) {
         double max = numbers.get(0);
         for (double number : numbers) {
