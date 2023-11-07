@@ -2,6 +2,7 @@ package com.xt.utils;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,9 +29,10 @@ public class DateTimeUtil {
     public final static long halfMinute = 30000L;
     public final static long tenSec = 10000L;
 
-    public  final static String desTimeStampFormat = "yyyy-MM-dd HH:mm:ss";
-    public  final static String desTimeStampFormatIncludingMs = "yyyy-MM-dd HH:mm:ss.SSS";
-    public  final static String desTimeStampFormatIncludingMs6 = "yyyy-MM-dd HH:mm:ss.SSSSSS";
+    public final static String desTimeStampFormat = "yyyy-MM-dd HH:mm:ss";
+    public final static String desTimeStampFormatIncludingMs = "yyyy-MM-dd HH:mm:ss.SSS";
+    public final static String desTimeStampFormatIncludingMs6 = "yyyy-MM-dd HH:mm:ss.SSSSSS";
+    public final static String desTimeStampFormatIncludingMs6WithZone = "yyyy-MM-dd HH:mm:ss.SSSSSSXXX";
 
     public final static SimpleDateFormat sdf = new SimpleDateFormat(desTimeStampFormat);
     public final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern(desTimeStampFormat);
@@ -38,6 +40,9 @@ public class DateTimeUtil {
     public final static DateTimeFormatter formatterMs = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs);
     public final static SimpleDateFormat sdfms6 = new SimpleDateFormat(desTimeStampFormatIncludingMs6);
     public final static DateTimeFormatter formatterMs6 = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs6);
+    public static DateTimeFormatter formatterIso8601 = DateTimeFormatter.ISO_DATE_TIME;
+    public static DateTimeFormatter formatterMs6WithZone = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs6WithZone);
+
     public static LocalDateTime getLocalDateTime(String dateTimeStr) {
         try {
             return LocalDateTime.parse(dateTimeStr, formatter);
@@ -48,12 +53,46 @@ public class DateTimeUtil {
                 try {
                     return LocalDateTime.parse(dateTimeStr, formatterMs6);
                 } catch (Exception e2) {
-                    return null;
+                    try {
+                        return LocalDateTime.parse(dateTimeStr, formatterIso8601);
+                    } catch (Exception e4) {
+                        try {
+                            return OffsetDateTime.parse(dateTimeStr, formatterMs6WithZone).toLocalDateTime();
+                        } catch (Exception e5) {
+                            return null;
+                        }
+                    }
                 }
             }
         }
     }
-
+    public static LocalDateTime getLocalDateTime2(String dateTimeStr, boolean tryZoneFormatterFirst) {
+        if(tryZoneFormatterFirst){
+            try {
+                return OffsetDateTime.parse(dateTimeStr, formatterMs6WithZone).toLocalDateTime();
+            }catch (Exception e) {
+                try {
+                    return LocalDateTime.parse(dateTimeStr, formatterMs6);
+                } catch (Exception e1) {
+                    try {
+                        return LocalDateTime.parse(dateTimeStr, formatterMs);
+                    } catch (Exception e2) {
+                        try {
+                            return LocalDateTime.parse(dateTimeStr, formatter);
+                        } catch (Exception e3) {
+                            try {
+                                return LocalDateTime.parse(dateTimeStr, formatterIso8601);
+                            } catch (Exception e4) {
+                                return null;
+                            }
+                        }
+                    }
+                }
+            }
+        }else {
+            return getLocalDateTime(dateTimeStr);
+        }
+    }
     public static ZonedDateTime getZonedDateTime(LocalDateTime dateTime, ZoneId zoneId) {
         ZonedDateTime zonedLocalDateTime = dateTime.atZone(ZoneId.systemDefault());
         return zonedLocalDateTime.withZoneSameInstant(zoneId);
