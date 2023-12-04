@@ -1,5 +1,7 @@
 package com.xt.utils;
 
+import lombok.*;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -98,6 +100,49 @@ public class MathUtil {
         }
         return count;
     }
+    public static Stat findStat(List<Double> numbers) {
+        double min = Double.MAX_VALUE;
+        double minNonZero = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        double total = 0;
+        double avg = 0;
+        double median = 0;
+        long negativeCount = 0;
+        long positiveCount = 0;
+        long totalCount = numbers.size();
+
+        for (double number : numbers) {
+            if (number < min) {
+                min = number;
+            }
+            if (number < minNonZero && number != 0) {
+                minNonZero = number;
+            }
+            if (number > max) {
+                max = number;
+            }
+            total += number;
+            if (number < 0) {
+                negativeCount++;
+            } else {
+                positiveCount++;
+            }
+        }
+        avg = total / totalCount;
+        median = findMedian(numbers);
+
+        return Stat.builder()
+                .min(min)
+                .minNonZero(minNonZero)
+                .max(max)
+                .total(total)
+                .avg(avg)
+                .median(median)
+                .negativeCount(negativeCount)
+                .positiveCount(positiveCount)
+                .totalCount(totalCount)
+                .build();
+    }
     public static double findAverage(List<Double> numbers) {
         double sum = 0;
         for (double number : numbers) {
@@ -156,4 +201,20 @@ public class MathUtil {
         bd = bd.setScale(places, RoundingMode.HALF_UP);
         return bd.doubleValue();
     }
+}
+
+@Setter@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+class Stat {
+    double min;
+    double minNonZero;
+    double max;
+    double total;
+    double avg;
+    double median;
+    long negativeCount;
+    long positiveCount;
+    long totalCount;
 }
