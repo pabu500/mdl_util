@@ -100,6 +100,15 @@ public class MathUtil {
         }
         return count;
     }
+    public static long findNegativeCount(List<Double> numbers) {
+        long count = 0;
+        for (double number : numbers) {
+            if (number < 0) {
+                count++;
+            }
+        }
+        return count;
+    }
     public static XtStat findStat(List<Double> numbers) {
         double min = Double.MAX_VALUE;
         double minNonZero = Double.MAX_VALUE;
@@ -176,6 +185,35 @@ public class MathUtil {
             }
         }
         return dominantLong;
+    }
+
+    public static Map<String, Double> findIntervalStat(List<Double> numbers, double threshold) {
+        Map<Long, Integer> frequencyMap = new HashMap<>();
+        long dominantLong = Math.round(numbers.get(0));
+        int dominantFrequency = 1;
+
+        long outlierCount = 0;
+
+        for (double number : numbers) {
+            Long candidate = Math.round(number);
+            int count = frequencyMap.getOrDefault(candidate, 0) + 1;
+            frequencyMap.put(candidate, count);
+
+            if (count > dominantFrequency) {
+                dominantLong = candidate;
+                dominantFrequency = count;
+            }
+        }
+        for (double number : numbers) {
+            if (number > threshold * dominantLong) {
+                outlierCount++;
+            }
+        }
+        Map<String, Double> intervalStat = new HashMap<>();
+        intervalStat.put("dominant_interval", (double) dominantLong);
+        intervalStat.put("outlier_count", (double) outlierCount);
+
+        return intervalStat;
     }
 
     public static double findStandardDiv(List<Double> numbers) {
