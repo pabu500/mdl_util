@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-class XtStat {
+public class XtStat {
     double min;
     double minNonZero;
     double max;
