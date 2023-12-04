@@ -100,7 +100,7 @@ public class MathUtil {
         }
         return count;
     }
-    public static Stat findStat(List<Double> numbers) {
+    public static XtStat findStat(List<Double> numbers) {
         double min = Double.MAX_VALUE;
         double minNonZero = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
@@ -131,7 +131,7 @@ public class MathUtil {
         avg = total / totalCount;
         median = findMedian(numbers);
 
-        return Stat.builder()
+        return XtStat.builder()
                 .min(min)
                 .minNonZero(minNonZero)
                 .max(max)
@@ -207,7 +207,7 @@ public class MathUtil {
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-class Stat {
+class XtStat {
     double min;
     double minNonZero;
     double max;
