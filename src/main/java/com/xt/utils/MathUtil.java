@@ -191,8 +191,9 @@ public class MathUtil {
         Map<Long, Integer> frequencyMap = new HashMap<>();
         long dominantLong = Math.round(numbers.get(0));
         int dominantFrequency = 1;
-
-        long outlierCount = 0;
+        long intervalOutlierCount = 0;
+        double minNonZeroInterval = Double.MAX_VALUE;
+        double maxInterval = Double.MIN_VALUE;
 
         for (double number : numbers) {
             Long candidate = Math.round(number);
@@ -206,12 +207,22 @@ public class MathUtil {
         }
         for (double number : numbers) {
             if (number > threshold * dominantLong) {
-                outlierCount++;
+                intervalOutlierCount++;
+            }
+            //minNonZeroInterval
+            if (number < minNonZeroInterval && number != 0) {
+                minNonZeroInterval = number;
+            }
+            //maxInterval
+            if (number > maxInterval) {
+                maxInterval = number;
             }
         }
         Map<String, Double> intervalStat = new HashMap<>();
         intervalStat.put("dominant_interval", (double) dominantLong);
-        intervalStat.put("outlier_count", (double) outlierCount);
+        intervalStat.put("outlier_count", (double) intervalOutlierCount);
+        intervalStat.put("min_non_zero_interval", minNonZeroInterval);
+        intervalStat.put("max_interval", maxInterval);
 
         return intervalStat;
     }
