@@ -228,7 +228,8 @@ public class SqlUtil {
                             Object value = targets.get(key);
                             if(value == null ) {
                                 if (includeNullValue) {
-                                    targetConstraint.append(key).append(" IS NULL AND ");
+//                                    targetConstraint.append(key).append(" IS NULL AND ");
+                                    targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) AND ");
                                 } else {
                                     continue;
                                 }
