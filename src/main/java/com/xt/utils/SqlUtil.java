@@ -432,6 +432,32 @@ public class SqlUtil {
             }
         }
 
+        boolean hasSort = false;
+        if(sqlMap.get("sort") != null && sqlMap.get("sort") instanceof Map<?,?>) {
+            Map<String, Object> sort = (Map<String, Object>) sqlMap.get("sort");
+            if(sort.containsKey("sort_by") && sort.containsKey("sort_order")){
+                hasSort = true;
+            }
+        }
+        if(hasSort){
+            Map<String, Object> sort = (Map<String, Object>) sqlMap.get("sort");
+            sql.append(" ORDER BY ").append(sort.get("sort_by"));
+            if(sort.get("sort_order") != null){
+                sql.append(" ").append(sort.get("sort_order"));
+            }
+            sql.append(" NULLS LAST");
+        }else if(sqlMap.get("time_key")!=null){
+            sql.append(" ORDER BY ").append(sqlMap.get("time_key")).append(" DESC");
+            sql.append(" NULLS LAST");
+        }
+
+        if(sqlMap.get("limit") != null) {
+            sql.append(" LIMIT ").append(sqlMap.get("limit"));
+        }
+        if(sqlMap.get("offset") != null) {
+            sql.append(" OFFSET ").append(sqlMap.get("offset"));
+        }
+
         return Map.of("sql", sql.toString());
     }
     public static Map<String, String> makeJoinSelectLikeSql2(Map<String, Object> sqlMap) {
