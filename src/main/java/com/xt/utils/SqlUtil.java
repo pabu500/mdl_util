@@ -411,14 +411,14 @@ public class SqlUtil {
             return Map.of("error", "Missing table name");
         }
 
-        if(sqlMap.get("join") != null) {
-            sql.append(" JOIN ").append(sqlMap.get("join"));
+        if(sqlMap.get("join_table_names") != null) {
+            sql.append(" JOIN ").append(sqlMap.get("join_table_names"));
         } else {
             return Map.of("error", "Missing join table name");
         }
 
-        if(sqlMap.get("on") != null) {
-            sql.append(" ON ").append(sqlMap.get("on"));
+        if(sqlMap.get("join_on") != null) {
+            sql.append(" ON ").append(sqlMap.get("join_on"));
         } else {
             return Map.of("error", "Missing on condition");
         }
