@@ -336,6 +336,14 @@ public class SqlUtil {
             }
         }
 
+        if(sqlMap.get("additional_constraint") != null) {
+            if(targetConstraint.toString().isEmpty()) {
+                targetConstraint = new StringBuilder(String.valueOf(sqlMap.get("additional_constraint")));
+            } else {
+                targetConstraint.append(" AND ").append(sqlMap.get("additional_constraint"));
+            }
+        }
+
         String timeConstraint = "";
         if(sqlMap.get("time_key") != null) {
             if(sqlMap.get("start_datetime")!=null){
