@@ -432,6 +432,28 @@ public class SqlUtil {
             }
         }
 
+        String timeConstraint = "";
+        if(sqlMap.get("time_key") != null) {
+            if(sqlMap.get("start_datetime")!=null){
+                timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime");
+            }
+            if(sqlMap.get("end_datetime")!=null){
+                if(timeConstraint.isEmpty()){
+                    timeConstraint = sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
+                }else{
+                    timeConstraint += "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime");
+                }
+            }
+        }
+
+        if(!targetConstraint.toString().isEmpty() && !timeConstraint.isEmpty()) {
+            sql.append(" WHERE ").append(targetConstraint).append(" AND ").append(timeConstraint);
+        } else if(!targetConstraint.toString().isEmpty()) {
+            sql.append(" WHERE ").append(targetConstraint);
+        } else if(!timeConstraint.isEmpty()) {
+            sql.append(" WHERE ").append(timeConstraint);
+        }
+
         boolean hasSort = false;
         if(sqlMap.get("sort") != null && sqlMap.get("sort") instanceof Map<?,?>) {
             Map<String, Object> sort = (Map<String, Object>) sqlMap.get("sort");
