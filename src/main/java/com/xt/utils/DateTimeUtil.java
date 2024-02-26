@@ -177,4 +177,10 @@ public class DateTimeUtil {
     public static String getSgNowStrMs() {
         return getZonedDateTime(LocalDateTime.now(), ZoneId.of("Asia/Singapore")).format(formatterMs);
     }
+
+    public static int getDaysInMonth(LocalDateTime dateTime) {
+        int year = dateTime.getYear();
+        boolean isLeapYear = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+        return dateTime.getMonth().length(isLeapYear);
+    }
 }
