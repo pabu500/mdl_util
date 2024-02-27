@@ -180,6 +180,16 @@ public class ExcelUtil {
         }
     }
 
+    public static void addPatch(Workbook workbook, String sheetName, LinkedHashMap<String, Object> patch) {
+        for (Map.Entry<String, Object> entry : patch.entrySet()) {
+            String celName = entry.getKey();
+            //turn "A1" to "1" and 1
+            int col = celName.charAt(0) - 'A';
+            int row = Integer.parseInt(celName.substring(1)) - 1;
+            setCell(workbook, sheetName, row, col, entry.getValue());
+        }
+    }
+
     public static void saveWorkbook(Workbook workbook, String fileName) {
         FileOutputStream outputStream = null;
         try {
