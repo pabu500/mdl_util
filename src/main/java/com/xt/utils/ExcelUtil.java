@@ -148,6 +148,38 @@ public class ExcelUtil {
         }
     }
 
+    public static void setCell(Workbook workbook, String sheetName, int row, int col, Object value) {
+        Sheet sheet = workbook.getSheet(sheetName);
+        if(sheet == null) {
+            sheet = workbook.createSheet(sheetName);
+        }
+        Row dataRow = sheet.getRow(row);
+        if(dataRow == null) {
+            dataRow = sheet.createRow(row);
+        }
+        Cell cell = dataRow.getCell(col);
+        if(cell == null) {
+            cell = dataRow.createCell(col);
+        }
+        if (value instanceof String) {
+            cell.setCellValue((String) value);
+        } else if (value instanceof Integer) {
+            cell.setCellValue((Integer) value);
+        } else if (value instanceof Long) {
+            cell.setCellValue((Long) value);
+        } else if (value instanceof Double) {
+            cell.setCellValue((Double) value);
+        } else if (value instanceof Float) {
+            cell.setCellValue((Float) value);
+        } else if (value instanceof Boolean) {
+            cell.setCellValue((Boolean) value);
+        } else if (value instanceof Date) {
+            cell.setCellValue((Date) value);
+        } else if (value instanceof LocalDateTime) {
+            cell.setCellValue((LocalDateTime) value);
+        }
+    }
+
     public static void saveWorkbook(Workbook workbook, String fileName) {
         FileOutputStream outputStream = null;
         try {
