@@ -51,6 +51,66 @@ public class ExcelUtil {
         return workbook;
     }
 
+    public static Workbook createWorkbookEmpty(CellStyle headerStyle, XSSFFont headerFont) {
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        if(headerStyle == null) {
+            headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        }
+
+        if(headerFont == null) {
+            headerFont = workbook.createFont();
+            headerFont.setFontName("Arial");
+            headerFont.setFontHeightInPoints((short) 13);
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+        }
+        return workbook;
+    }
+
+    public static void addSheet(Workbook workbook, String sheetName, LinkedHashMap<String, Integer> headers, List<LinkedHashMap<String, Object>> dataRows) {
+        CellStyle style = workbook.createCellStyle();
+        style.setWrapText(true);
+
+        Sheet sheet = workbook.createSheet(sheetName);
+        int rowCount = 0;
+        Row headerRow = sheet.createRow(rowCount++);
+        int columnCount = 0;
+        for (Map.Entry<String, Integer> entry : headers.entrySet()) {
+            Cell cell = headerRow.createCell(columnCount++);
+            cell.setCellValue(entry.getKey());
+            cell.setCellStyle(style);
+            sheet.setColumnWidth(columnCount, entry.getValue());
+        }
+
+        for (Map<String, Object> row : dataRows) {
+            Row dataRow = sheet.createRow(rowCount++);
+            columnCount = 0;
+            for (Map.Entry<String, Object> entry : row.entrySet()) {
+                Cell cell = dataRow.createCell(columnCount++);
+                if (entry.getValue() instanceof String) {
+                    cell.setCellValue((String) entry.getValue());
+                } else if (entry.getValue() instanceof Integer) {
+                    cell.setCellValue((Integer) entry.getValue());
+                } else if (entry.getValue() instanceof Long) {
+                    cell.setCellValue((Long) entry.getValue());
+                } else if (entry.getValue() instanceof Double) {
+                    cell.setCellValue((Double) entry.getValue());
+                } else if (entry.getValue() instanceof Float) {
+                    cell.setCellValue((Float) entry.getValue());
+                } else if (entry.getValue() instanceof Boolean) {
+                    cell.setCellValue((Boolean) entry.getValue());
+                } else if (entry.getValue() instanceof Date) {
+                    cell.setCellValue((Date) entry.getValue());
+                } else if (entry.getValue() instanceof LocalDateTime) {
+                    cell.setCellValue((LocalDateTime) entry.getValue());
+                }
+            }
+        }
+    }
+
     public static void addRows(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows) {
 
         CellStyle style = workbook.createCellStyle();
