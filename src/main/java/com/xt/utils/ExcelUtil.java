@@ -154,7 +154,7 @@ public class ExcelUtil {
         }
     }
 
-    public static void setCell(Workbook workbook, String sheetName, int row, int col, Object value) {
+    public static void setCell(Workbook workbook, String sheetName, int row, int col, Object value, Double width) {
         Sheet sheet = workbook.getSheet(sheetName);
         if(sheet == null) {
             sheet = workbook.createSheet(sheetName);
@@ -184,15 +184,23 @@ public class ExcelUtil {
         } else if (value instanceof LocalDateTime) {
             cell.setCellValue((LocalDateTime) value);
         }
+        if(width != null) {
+            sheet.setColumnWidth(col, width.intValue());
+        }
     }
 
-    public static void addPatch(Workbook workbook, String sheetName, LinkedHashMap<String, Object> patch) {
-        for (Map.Entry<String, Object> entry : patch.entrySet()) {
-            String celName = entry.getKey();
+    public static void addPatch(Workbook workbook, String sheetName, List<Map<String, Object>> patch) {
+        for (Map<String, Object> entry : patch) {
+            String celName = (String) entry.get("cell");
             //turn "A1" to "1" and 1
             int col = celName.charAt(0) - 'A';
             int row = Integer.parseInt(celName.substring(1)) - 1;
-            setCell(workbook, sheetName, row, col, entry.getValue());
+            Object value = entry.get("value");
+            Double width = null;
+            if(width != null){
+                width = MathUtil.ObjToDouble(entry.get("width"));
+            }
+            setCell(workbook, sheetName, row, col, value, width);
         }
     }
 
