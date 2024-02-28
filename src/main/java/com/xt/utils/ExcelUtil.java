@@ -84,10 +84,11 @@ public class ExcelUtil {
         Row headerRow = sheet.createRow(rowCount++);
         int columnCount = 0;
         for (Map.Entry<String, Integer> entry : headers.entrySet()) {
-            Cell cell = headerRow.createCell(columnCount++);
+            Cell cell = headerRow.createCell(columnCount);
             cell.setCellValue(entry.getKey());
             cell.setCellStyle(headerStyle);
             sheet.setColumnWidth(columnCount, entry.getValue());
+            columnCount++;
         }
 
         for (Map<String, Object> row : dataRows) {
