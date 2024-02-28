@@ -57,7 +57,7 @@ public class ExcelUtil {
         return workbook;
     }
 
-    public static void addSheet(XSSFWorkbook workbook,
+    public static void addSheet(Workbook workbook,
                                 String sheetName,
                                 LinkedHashMap<String, Integer> headers,
                                 List<LinkedHashMap<String, Object>> dataRows,
@@ -69,9 +69,10 @@ public class ExcelUtil {
             headerStyle.setWrapText(true);
         }
 
+        XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
 
         if(headerFont == null) {
-            headerFont = workbook.createFont();
+            headerFont = xssfWorkbook.createFont();
             headerFont.setFontName("Arial");
             headerFont.setFontHeightInPoints((short) 13);
             headerFont.setBold(true);
