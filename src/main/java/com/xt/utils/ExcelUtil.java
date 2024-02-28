@@ -203,13 +203,22 @@ public class ExcelUtil {
             if(entry.get("width") != null){
                 width = MathUtil.ObjToDouble(entry.get("width"));
             }
+
+            CellStyle style = null;
             if("key".equals(entry.get("style"))){
-                CellStyle style = workbook.createCellStyle();
+                style = workbook.createCellStyle();
                 style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
                 style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                setCell(workbook, sheetName, row, col, value, width, style);
+
+                XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
+                XSSFFont keyFont = xssfWorkbook.createFont();
+                keyFont.setFontName("Arial");
+                keyFont.setFontHeightInPoints((short) 12);
+                keyFont.setBold(true);
+
+                style.setFont(keyFont);
             }
-            setCell(workbook, sheetName, row, col, value, width, null);
+            setCell(workbook, sheetName, row, col, value, width, style);
         }
     }
 
