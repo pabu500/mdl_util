@@ -51,14 +51,24 @@ public class ExcelUtil {
         return workbook;
     }
 
-    public static Workbook createWorkbookEmpty(CellStyle headerStyle, XSSFFont headerFont) {
+    public static Workbook createWorkbookEmpty() {
         XSSFWorkbook workbook = new XSSFWorkbook();
 
+        return workbook;
+    }
+
+    public static void addSheet(XSSFWorkbook workbook,
+                                String sheetName,
+                                LinkedHashMap<String, Integer> headers,
+                                List<LinkedHashMap<String, Object>> dataRows,
+                                CellStyle headerStyle, XSSFFont headerFont) {
         if(headerStyle == null) {
             headerStyle = workbook.createCellStyle();
             headerStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setWrapText(true);
         }
+
 
         if(headerFont == null) {
             headerFont = workbook.createFont();
@@ -67,12 +77,6 @@ public class ExcelUtil {
             headerFont.setBold(true);
             headerStyle.setFont(headerFont);
         }
-        return workbook;
-    }
-
-    public static void addSheet(Workbook workbook, String sheetName, LinkedHashMap<String, Integer> headers, List<LinkedHashMap<String, Object>> dataRows) {
-        CellStyle style = workbook.createCellStyle();
-        style.setWrapText(true);
 
         Sheet sheet = workbook.createSheet(sheetName);
         int rowCount = 0;
@@ -81,7 +85,7 @@ public class ExcelUtil {
         for (Map.Entry<String, Integer> entry : headers.entrySet()) {
             Cell cell = headerRow.createCell(columnCount++);
             cell.setCellValue(entry.getKey());
-            cell.setCellStyle(style);
+            cell.setCellStyle(headerStyle);
             sheet.setColumnWidth(columnCount, entry.getValue());
         }
 
