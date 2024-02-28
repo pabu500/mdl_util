@@ -154,7 +154,7 @@ public class ExcelUtil {
         }
     }
 
-    public static void setCell(Workbook workbook, String sheetName, int row, int col, Object value, Double width) {
+    public static void setCell(Workbook workbook, String sheetName, int row, int col, Object value, Double width, CellStyle style) {
         Sheet sheet = workbook.getSheet(sheetName);
         if(sheet == null) {
             sheet = workbook.createSheet(sheetName);
@@ -187,6 +187,9 @@ public class ExcelUtil {
         if(width != null) {
             sheet.setColumnWidth(col, width.intValue());
         }
+        if(style != null) {
+            cell.setCellStyle(style);
+        }
     }
 
     public static void addPatch(Workbook workbook, String sheetName, List<Map<String, Object>> patch) {
@@ -200,7 +203,13 @@ public class ExcelUtil {
             if(entry.get("width") != null){
                 width = MathUtil.ObjToDouble(entry.get("width"));
             }
-            setCell(workbook, sheetName, row, col, value, width);
+            if("key".equals(entry.get("style"))){
+                CellStyle style = workbook.createCellStyle();
+                style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+                style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                setCell(workbook, sheetName, row, col, value, width, style);
+            }
+            setCell(workbook, sheetName, row, col, value, width, null);
         }
     }
 
