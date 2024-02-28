@@ -197,7 +197,7 @@ public class ExcelUtil {
             int row = Integer.parseInt(celName.substring(1)) - 1;
             Object value = entry.get("value");
             Double width = null;
-            if(width != null){
+            if(entry.get("width") != null){
                 width = MathUtil.ObjToDouble(entry.get("width"));
             }
             setCell(workbook, sheetName, row, col, value, width);
