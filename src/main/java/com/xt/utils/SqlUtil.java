@@ -775,7 +775,7 @@ public class SqlUtil {
                 continue;
             }
 
-            if(content.get(key) instanceof Integer || content.get(key) instanceof Double) {
+            if(content.get(key) instanceof Integer || content.get(key) instanceof Long || content.get(key) instanceof Double) {
                 sql.append(" ").append(key).append(" = ").append(content.get(key)).append(",");
             } else {
                 sql.append(" ").append(key).append(" = '").append(content.get(key)).append("',");
