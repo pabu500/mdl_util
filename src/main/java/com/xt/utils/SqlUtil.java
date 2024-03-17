@@ -239,38 +239,52 @@ public class SqlUtil {
                             if(value == null ) {
                                 if (includeNullValue) {
 //                                    targetConstraint.append(key).append(" IS NULL AND ");
-                                    targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) AND ");
+                                    if(isConstraintPresent){
+                                        targetConstraint.append(" AND ");
+                                    }
+//                                    targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) AND ");
+                                    targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) ");
                                     isConstraintPresent = true;
                                 } else {
                                     continue;
                                 }
                             }else {
+                                if(isConstraintPresent){
+                                    targetConstraint.append(" AND ");
+                                }
                                 if (value instanceof Integer || value instanceof Double) {
-                                    targetConstraint.append(key).append(" = ").append(targets.get(key)).append(" AND ");
+                                    targetConstraint.append(key).append(" = ").append(targets.get(key))/*.append(" AND ")*/;
                                     continue;
                                 }
                                 if(value instanceof String){
                                     if(((String) value).isEmpty()) {
-                                        targetConstraint.append(key).append(" = '' AND ");
+//                                        targetConstraint.append(key).append(" = '' AND ");
+                                        targetConstraint.append(key).append(" = '' ");
                                         continue;
                                     }
                                 }
-                                targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
+//                                targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
+                                targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' ");
                                 isConstraintPresent = true;
                             }
                         }
-                        targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
+//                        targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
                     }
                 }
             }
         }
 
         if(sqlMap.get("like_target_key") != null && sqlMap.get("like_target_value") != null) {
-            if(targetConstraint.toString().isEmpty()) {
-                targetConstraint = new StringBuilder(sqlMap.get("like_target_key") + " ilike '%" + sqlMap.get("like_target_value") + "%'");
-            } else {
-                targetConstraint.append(" AND ").append(sqlMap.get("like_target_key")).append(" ilike '%").append(sqlMap.get("like_target_value")).append("%'");
+//            if(targetConstraint.toString().isEmpty()) {
+//                targetConstraint = new StringBuilder(sqlMap.get("like_target_key") + " ilike '%" + sqlMap.get("like_target_value") + "%'");
+//            } else {
+//                targetConstraint.append(" AND ").append(sqlMap.get("like_target_key")).append(" ilike '%").append(sqlMap.get("like_target_value")).append("%'");
+//            }
+            if(isConstraintPresent){
+                targetConstraint.append(" AND ");
             }
+            targetConstraint.append(sqlMap.get("like_target_key")).append(" ilike '%").append(sqlMap.get("like_target_value")).append("%'");
+
             isConstraintPresent = true;
         }else{
             //multiple target
@@ -283,26 +297,38 @@ public class SqlUtil {
                         for (String key : likeTargets.keySet()) {
                             Object value = likeTargets.get(key);
                             if(value == null ){
+                                if(isConstraintPresent){
+                                    likeTargetConstraint.append(" AND ");
+                                }
                                 if(includeNullValue){
-                                    likeTargetConstraint.append(key).append(" IS NULL AND ");
+//                                    likeTargetConstraint.append(key).append(" IS NULL AND ");
+                                    likeTargetConstraint.append(key).append(" IS NULL ");
+                                    isConstraintPresent = true;
                                 }else {
                                     continue;
                                 }
                             }else {
+                                if(isConstraintPresent){
+                                    likeTargetConstraint.append(" AND ");
+                                }
                                 if (value instanceof Integer || value instanceof Double) {
-                                    likeTargetConstraint.append(key).append(" = ").append(likeTargets.get(key)).append(" AND ");
+//                                    likeTargetConstraint.append(key).append(" = ").append(likeTargets.get(key)).append(" AND ");
+                                    likeTargetConstraint.append(key).append(" = ").append(likeTargets.get(key));
                                     continue;
                                 }
                                 if(value instanceof String){
                                     if(((String) value).isEmpty()) {
-                                        likeTargetConstraint.append(key).append(" = '' AND ");
+//                                        likeTargetConstraint.append(key).append(" = '' AND ");
+                                        likeTargetConstraint.append(key).append(" = '' ");
                                         continue;
                                     }
                                 }
-                                likeTargetConstraint.append(key).append(" ilike '%").append(likeTargets.get(key)).append("%' AND ");
+//                                likeTargetConstraint.append(key).append(" ilike '%").append(likeTargets.get(key)).append("%' AND ");
+                                likeTargetConstraint.append(key).append(" ilike '%").append(likeTargets.get(key)).append("%' ");
+                                isConstraintPresent = true;
                             }
                         }
-                        likeTargetConstraint = new StringBuilder(likeTargetConstraint.substring(0, likeTargetConstraint.length() - 5));
+//                        likeTargetConstraint = new StringBuilder(likeTargetConstraint.substring(0, likeTargetConstraint.length() - 5));
                         if(targetConstraint.toString().isEmpty()) {
                             targetConstraint = likeTargetConstraint;
                         } else {
@@ -317,54 +343,68 @@ public class SqlUtil {
         if(sqlMap.get("idInConstraint") != null) {
             String idInConstraint = (String) sqlMap.get("idInConstraint");
             if(!idInConstraint.isEmpty()) {
-                if (targetConstraint.toString().isEmpty()) {
-                    targetConstraint = new StringBuilder((String) sqlMap.get("idInConstraint"));
-                } else {
-                    targetConstraint.append(" AND ").append(sqlMap.get("idInConstraint"));
+                if(isConstraintPresent) {
+                    targetConstraint.append(" AND ").append(idInConstraint);
                 }
+//                if (targetConstraint.toString().isEmpty()) {
+//                    targetConstraint = new StringBuilder((String) sqlMap.get("idInConstraint"));
+//                } else {
+//                    targetConstraint.append(" AND ").append(sqlMap.get("idInConstraint"));
+//                }
                 isConstraintPresent = true;
             }
         }
 
         if(sqlMap.get("is_not_null") != null) {
-            if(targetConstraint.toString().isEmpty()) {
-                targetConstraint = new StringBuilder(sqlMap.get("is_not_null") + " IS NOT NULL");
-            } else {
-                targetConstraint.append(" AND ").append(sqlMap.get("is_not_null")).append(" IS NOT NULL");
+            if(isConstraintPresent){
+                targetConstraint.append(" AND ");
             }
+            targetConstraint.append(sqlMap.get("is_not_null")).append(" IS NOT NULL");
+//            if(targetConstraint.toString().isEmpty()) {
+//                targetConstraint = new StringBuilder(sqlMap.get("is_not_null") + " IS NOT NULL");
+//            } else {
+//                targetConstraint.append(" AND ").append(sqlMap.get("is_not_null")).append(" IS NOT NULL");
+//            }
             isConstraintPresent = true;
         }
 
         if(sqlMap.get("is_not_empty") != null) {
-            if(targetConstraint.toString().isEmpty()) {
-                targetConstraint = new StringBuilder(sqlMap.get("is_not_empty") + " != ''");
-            } else {
-                targetConstraint.append(" AND ").append(sqlMap.get("is_not_empty")).append(" != ''");
+            if(isConstraintPresent){
+                targetConstraint.append(" AND ");
             }
+            targetConstraint.append(sqlMap.get("is_not_empty")).append(" != ''");
+//            if(targetConstraint.toString().isEmpty()) {
+//                targetConstraint = new StringBuilder(sqlMap.get("is_not_empty") + " != ''");
+//            } else {
+//                targetConstraint.append(" AND ").append(sqlMap.get("is_not_empty")).append(" != ''");
+//            }
             isConstraintPresent = true;
         }
 
         if(sqlMap.get("additional_constraint") != null) {
-            if(targetConstraint.toString().isEmpty()) {
-                targetConstraint = new StringBuilder(String.valueOf(sqlMap.get("additional_constraint")));
-            } else {
-                targetConstraint.append(" AND ").append(sqlMap.get("additional_constraint"));
+            if(isConstraintPresent){
+                targetConstraint.append(" AND ");
             }
+            targetConstraint.append(sqlMap.get("additional_constraint"));
+//            if(targetConstraint.toString().isEmpty()) {
+//                targetConstraint = new StringBuilder(String.valueOf(sqlMap.get("additional_constraint")));
+//            } else {
+//                targetConstraint.append(" AND ").append(sqlMap.get("additional_constraint"));
+//            }
             isConstraintPresent = true;
         }
 
         StringBuilder timeConstraint = new StringBuilder();
         if(sqlMap.get("time_key") != null) {
             if(sqlMap.get("start_datetime")!=null){
-                timeConstraint = new StringBuilder(sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "'");
+                timeConstraint.append(sqlMap.get("time_key")).append(" >= '").append(sqlMap.get("start_datetime")).append("'");
                 isConstraintPresent = true;
             }
+            if(!timeConstraint.isEmpty()){
+                timeConstraint.append(" AND ");
+            }
             if(sqlMap.get("end_datetime")!=null){
-                if(timeConstraint.isEmpty()){
-                    timeConstraint = new StringBuilder(sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'");
-                }else{
-                    timeConstraint.append(" AND ").append(sqlMap.get("time_key")).append(" <= '").append(sqlMap.get("end_datetime")).append("'");
-                }
+                timeConstraint.append(sqlMap.get("time_key")).append(" <= '").append(sqlMap.get("end_datetime")).append("'");
                 isConstraintPresent = true;
             }
         }
@@ -377,22 +417,26 @@ public class SqlUtil {
                 String endDateTime = (String) ((Map<String, Object>) entry.getValue()).get("end_datetime");
 //                timeConstraint = timeKey + " >= '" + startDateTime + "'";
                 if(startDateTime != null){
-                    if(isConstraintPresent){
-                        timeConstraint.append(" AND ").append(timeKey).append(" >= '").append(startDateTime).append("'");
-                    }else{
-                        timeConstraint = new StringBuilder(timeKey + " >= '" + startDateTime + "'");
+                    if(!timeConstraint.isEmpty()){
+                        timeConstraint.append(" AND ");
                     }
+                    timeConstraint.append(timeKey).append(" >= '").append(startDateTime).append("'");
                     isConstraintPresent = true;
                 }
                 if(endDateTime != null){
-                    if(isConstraintPresent){
-                        timeConstraint.append(" AND ").append(timeKey).append(" <= '").append(endDateTime).append("'");
-                    }else{
-                        timeConstraint = new StringBuilder(timeKey + " <= '" + endDateTime + "'");
+                    if(!timeConstraint.isEmpty()){
+                        timeConstraint.append(" AND ");
                     }
+                    timeConstraint.append(timeKey).append(" <= '").append(endDateTime).append("'");
                     isConstraintPresent = true;
                 }
             }
+        }
+        if(!timeConstraint.toString().isEmpty()){
+            if(isConstraintPresent){
+                targetConstraint.append(" AND ");
+            }
+            targetConstraint.append(timeConstraint);
         }
 
         if(!targetConstraint.toString().isEmpty() && (!timeConstraint.isEmpty())) {
