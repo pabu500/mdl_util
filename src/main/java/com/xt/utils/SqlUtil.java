@@ -858,7 +858,11 @@ public class SqlUtil {
             if(content.get(key) instanceof Integer || content.get(key) instanceof Long || content.get(key) instanceof Double) {
                 sql.append(" ").append(key).append(" = ").append(content.get(key)).append(",");
             } else {
-                sql.append(" ").append(key).append(" = '").append(content.get(key)).append("',");
+                if((content.get(key)+"").isEmpty()) {
+                    sql.append(" ").append(key).append(" = null,");
+                }else {
+                    sql.append(" ").append(key).append(" = '").append(content.get(key)).append("',");
+                }
             }
         }
         sql.deleteCharAt(sql.length() - 1);
