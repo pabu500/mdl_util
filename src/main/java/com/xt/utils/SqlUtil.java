@@ -353,17 +353,17 @@ public class SqlUtil {
             isConstraintPresent = true;
         }
 
-        String timeConstraint = "";
+        StringBuilder timeConstraint = new StringBuilder();
         if(sqlMap.get("time_key") != null) {
             if(sqlMap.get("start_datetime")!=null){
-                timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "'";
+                timeConstraint = new StringBuilder(sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "'");
                 isConstraintPresent = true;
             }
             if(sqlMap.get("end_datetime")!=null){
                 if(timeConstraint.isEmpty()){
-                    timeConstraint = sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
+                    timeConstraint = new StringBuilder(sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'");
                 }else{
-                    timeConstraint += " AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
+                    timeConstraint.append(" AND ").append(sqlMap.get("time_key")).append(" <= '").append(sqlMap.get("end_datetime")).append("'");
                 }
                 isConstraintPresent = true;
             }
@@ -375,23 +375,27 @@ public class SqlUtil {
                 String timeKey = entry.getKey();
                 String startDateTime = (String) ((Map<String, Object>) entry.getValue()).get("start_datetime");
                 String endDateTime = (String) ((Map<String, Object>) entry.getValue()).get("end_datetime");
-                timeConstraint = timeKey + " >= '" + startDateTime + "'";
+//                timeConstraint = timeKey + " >= '" + startDateTime + "'";
                 if(startDateTime != null){
-                    timeConstraint = timeKey + " >= '" + startDateTime + "'";
+                    if(isConstraintPresent){
+                        timeConstraint.append(" AND ").append(timeKey).append(" >= '").append(startDateTime).append("'");
+                    }else{
+                        timeConstraint = new StringBuilder(timeKey + " >= '" + startDateTime + "'");
+                    }
                     isConstraintPresent = true;
                 }
                 if(endDateTime != null){
                     if(isConstraintPresent){
-                        timeConstraint += " AND " + timeKey + " <= '" + endDateTime + "'";
+                        timeConstraint.append(" AND ").append(timeKey).append(" <= '").append(endDateTime).append("'");
                     }else{
-                        timeConstraint = timeKey + " <= '" + endDateTime + "'";
+                        timeConstraint = new StringBuilder(timeKey + " <= '" + endDateTime + "'");
                     }
                     isConstraintPresent = true;
                 }
             }
         }
 
-        if(!targetConstraint.toString().isEmpty() && !timeConstraint.isEmpty()) {
+        if(!targetConstraint.toString().isEmpty() && (!timeConstraint.isEmpty())) {
             sql.append(" WHERE ").append(targetConstraint).append(" AND ").append(timeConstraint);
         } else if(!targetConstraint.toString().isEmpty()) {
             sql.append(" WHERE ").append(targetConstraint);
