@@ -220,11 +220,13 @@ public class SqlUtil {
         }
 
         StringBuilder targetConstraint = new StringBuilder();
+        boolean isConstraintPresent = false;
         boolean includeNullValue = sqlMap.get("include_null_value") != null && sqlMap.get("include_null_value").equals("true");
 
         //by default, use key = value
         if(sqlMap.get("target_key") != null && sqlMap.get("target_value") != null) {
             targetConstraint = new StringBuilder(sqlMap.get("target_key") + " = '" + sqlMap.get("target_value") + "'");
+            isConstraintPresent = true;
         }else{
             //multiple target
             if(sqlMap.get("targets") != null){
@@ -238,6 +240,7 @@ public class SqlUtil {
                                 if (includeNullValue) {
 //                                    targetConstraint.append(key).append(" IS NULL AND ");
                                     targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) AND ");
+                                    isConstraintPresent = true;
                                 } else {
                                     continue;
                                 }
@@ -253,6 +256,7 @@ public class SqlUtil {
                                     }
                                 }
                                 targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
+                                isConstraintPresent = true;
                             }
                         }
                         targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
@@ -267,10 +271,10 @@ public class SqlUtil {
             } else {
                 targetConstraint.append(" AND ").append(sqlMap.get("like_target_key")).append(" ilike '%").append(sqlMap.get("like_target_value")).append("%'");
             }
+            isConstraintPresent = true;
         }else{
             //multiple target
             if(sqlMap.get("like_targets") != null){
-
                 if(sqlMap.get("like_targets") instanceof Map<?,?>){
                     StringBuilder likeTargetConstraint = new StringBuilder();
                     Map<String, Object> likeTargets = (Map<String, Object>) sqlMap.get("like_targets");
@@ -304,6 +308,7 @@ public class SqlUtil {
                         } else {
                             targetConstraint.append(" AND ").append(likeTargetConstraint);
                         }
+                        isConstraintPresent = true;
                     }
                 }
             }
@@ -317,6 +322,7 @@ public class SqlUtil {
                 } else {
                     targetConstraint.append(" AND ").append(sqlMap.get("idInConstraint"));
                 }
+                isConstraintPresent = true;
             }
         }
 
@@ -326,6 +332,7 @@ public class SqlUtil {
             } else {
                 targetConstraint.append(" AND ").append(sqlMap.get("is_not_null")).append(" IS NOT NULL");
             }
+            isConstraintPresent = true;
         }
 
         if(sqlMap.get("is_not_empty") != null) {
@@ -334,6 +341,7 @@ public class SqlUtil {
             } else {
                 targetConstraint.append(" AND ").append(sqlMap.get("is_not_empty")).append(" != ''");
             }
+            isConstraintPresent = true;
         }
 
         if(sqlMap.get("additional_constraint") != null) {
@@ -342,12 +350,14 @@ public class SqlUtil {
             } else {
                 targetConstraint.append(" AND ").append(sqlMap.get("additional_constraint"));
             }
+            isConstraintPresent = true;
         }
 
         String timeConstraint = "";
         if(sqlMap.get("time_key") != null) {
             if(sqlMap.get("start_datetime")!=null){
                 timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "'";
+                isConstraintPresent = true;
             }
             if(sqlMap.get("end_datetime")!=null){
                 if(timeConstraint.isEmpty()){
@@ -355,8 +365,30 @@ public class SqlUtil {
                 }else{
                     timeConstraint += " AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
                 }
+                isConstraintPresent = true;
             }
-//            timeConstraint = sqlMap.get("time_key") + " >= '" + sqlMap.get("start_datetime") + "' AND " + sqlMap.get("time_key") + " <= '" + sqlMap.get("end_datetime") + "'";
+        }
+
+        if(sqlMap.get("time_constraint") != null) {
+            Map<String, Object> timeConstraintMap = (Map<String, Object>) sqlMap.get("time_constraint");
+            for (Map.Entry<String, Object> entry : timeConstraintMap.entrySet()) {
+                String timeKey = entry.getKey();
+                String startDateTime = (String) ((Map<String, Object>) entry.getValue()).get("start_datetime");
+                String endDateTime = (String) ((Map<String, Object>) entry.getValue()).get("end_datetime");
+                timeConstraint = timeKey + " >= '" + startDateTime + "'";
+                if(startDateTime != null){
+                    timeConstraint = timeKey + " >= '" + startDateTime + "'";
+                    isConstraintPresent = true;
+                }
+                if(endDateTime != null){
+                    if(isConstraintPresent){
+                        timeConstraint += " AND " + timeKey + " <= '" + endDateTime + "'";
+                    }else{
+                        timeConstraint = timeKey + " <= '" + endDateTime + "'";
+                    }
+                    isConstraintPresent = true;
+                }
+            }
         }
 
         if(!targetConstraint.toString().isEmpty() && !timeConstraint.isEmpty()) {
