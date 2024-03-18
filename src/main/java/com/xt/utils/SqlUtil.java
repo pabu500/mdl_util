@@ -329,11 +329,16 @@ public class SqlUtil {
                             }
                         }
 //                        likeTargetConstraint = new StringBuilder(likeTargetConstraint.substring(0, likeTargetConstraint.length() - 5));
-                        if(targetConstraint.toString().isEmpty()) {
-                            targetConstraint = likeTargetConstraint;
-                        } else {
-                            targetConstraint.append(" AND ").append(likeTargetConstraint);
+//                        if(targetConstraint.toString().isEmpty()) {
+//                            targetConstraint = likeTargetConstraint;
+//                        } else {
+//                            targetConstraint.append(" AND ").append(likeTargetConstraint);
+//                        }
+                        if(isConstraintPresent){
+                            targetConstraint.append(" AND ");
                         }
+                        targetConstraint.append(likeTargetConstraint);
+
                         isConstraintPresent = true;
                     }
                 }
