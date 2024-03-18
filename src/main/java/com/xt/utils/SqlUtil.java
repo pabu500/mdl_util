@@ -480,8 +480,12 @@ public class SqlUtil {
 
         //filter out duplicate 'AND'
         String sqlStr = sql.toString().replaceAll("AND\\s+AND", "AND");
+        //filter out trailing 'AND'
+        sqlStr = sqlStr.replaceAll("AND\\s*$", "");
+        //filter out WHERE if no constraint
+        sqlStr = sqlStr.replaceAll("WHERE\\s+AND", "WHERE");
 
-        return Map.of("sql", sql.toString());
+        return Map.of("sql", sqlStr);
     }
     public static Map<String, String> makeJoinSelectLikeSql(Map<String, Object> sqlMap) {
         StringBuilder sql = new StringBuilder();
