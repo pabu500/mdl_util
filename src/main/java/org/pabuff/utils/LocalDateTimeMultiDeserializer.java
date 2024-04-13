@@ -1,4 +1,4 @@
-package com.xt.utils;
+package org.pabuff.utils;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

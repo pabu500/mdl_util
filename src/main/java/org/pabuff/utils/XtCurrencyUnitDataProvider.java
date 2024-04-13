@@ -1,4 +1,4 @@
-package com.xt.utils;
+package org.pabuff.utils;
 
 import org.joda.money.CurrencyUnitDataProvider;
 
