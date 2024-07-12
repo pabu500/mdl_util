@@ -194,8 +194,18 @@ public class DateTimeUtil {
         }
         return alignToDayStart(dateTime);
     }
+    public static String alignStrToDayStartStr(String dateTimeStr) {
+        LocalDateTime dateTime = getLocalDateTime(dateTimeStr);
+        if(dateTime == null) {
+            return null;
+        }
+        return alignToDayStart(dateTime).format(formatter);
+    }
     public static LocalDateTime alignToDayEnd(LocalDateTime dateTime) {
         return dateTime.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+    }
+    public static String alignToDayEndStr(LocalDateTime dateTime) {
+        return alignToDayEnd(dateTime).format(formatter);
     }
     public static LocalDateTime alignStrToDayEnd(String dateTimeStr) {
         LocalDateTime dateTime = getLocalDateTime(dateTimeStr);
@@ -203,5 +213,12 @@ public class DateTimeUtil {
             return null;
         }
         return alignToDayEnd(dateTime);
+    }
+    public static String alignStrToDayEndStr(String dateTimeStr) {
+        LocalDateTime dateTime = getLocalDateTime(dateTimeStr);
+        if(dateTime == null) {
+            return null;
+        }
+        return alignToDayEnd(dateTime).format(formatter);
     }
 }
