@@ -187,7 +187,21 @@ public class DateTimeUtil {
     public static LocalDateTime alignToDayStart(LocalDateTime dateTime) {
         return dateTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
     }
+    public static LocalDateTime alignStrToDayStart(String dateTimeStr) {
+        LocalDateTime dateTime = getLocalDateTime(dateTimeStr);
+        if(dateTime == null) {
+            return null;
+        }
+        return alignToDayStart(dateTime);
+    }
     public static LocalDateTime alignToDayEnd(LocalDateTime dateTime) {
         return dateTime.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+    }
+    public static LocalDateTime alignStrToDayEnd(String dateTimeStr) {
+        LocalDateTime dateTime = getLocalDateTime(dateTimeStr);
+        if(dateTime == null) {
+            return null;
+        }
+        return alignToDayEnd(dateTime);
     }
 }
