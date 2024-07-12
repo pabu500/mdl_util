@@ -183,4 +183,11 @@ public class DateTimeUtil {
         boolean isLeapYear = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
         return dateTime.getMonth().length(isLeapYear);
     }
+
+    public static LocalDateTime alignToDayStart(LocalDateTime dateTime) {
+        return dateTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
+    }
+    public static LocalDateTime alignToDayEnd(LocalDateTime dateTime) {
+        return dateTime.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+    }
 }
