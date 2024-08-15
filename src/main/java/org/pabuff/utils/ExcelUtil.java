@@ -8,10 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 //@Service
 public class ExcelUtil {
@@ -61,7 +58,8 @@ public class ExcelUtil {
                                 String sheetName,
                                 LinkedHashMap<String, Integer> headers,
                                 List<LinkedHashMap<String, Object>> dataRows,
-                                CellStyle headerStyle, XSSFFont headerFont) {
+                                CellStyle headerStyle, XSSFFont headerFont,
+                                Boolean checkCellColor) {
         if(headerStyle == null) {
             headerStyle = workbook.createCellStyle();
             headerStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
@@ -70,6 +68,7 @@ public class ExcelUtil {
         }
 
         XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
+        ExcelGlobal excelGlobal = new ExcelGlobal();
 
         if(headerFont == null) {
             headerFont = xssfWorkbook.createFont();
@@ -96,6 +95,64 @@ public class ExcelUtil {
             columnCount = 0;
             for (Map.Entry<String, Object> entry : row.entrySet()) {
                 Cell cell = dataRow.createCell(columnCount++);
+
+                if(checkCellColor != null && checkCellColor){
+                    if(row.containsKey(entry.getKey() + excelGlobal.getCellColorSuffix())){
+                        Short color = (Short) row.get(entry.getKey() + excelGlobal.getCellColorSuffix());
+                        CellStyle style = addCellStyle(workbook, sheetName, color, null, null);
+                        setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+                        continue;
+                    }
+                }
+
+                if (entry.getValue() instanceof String) {
+                    cell.setCellValue((String) entry.getValue());
+                } else if (entry.getValue() instanceof Integer) {
+                    cell.setCellValue((Integer) entry.getValue());
+                } else if (entry.getValue() instanceof Long) {
+                    cell.setCellValue((Long) entry.getValue());
+                } else if (entry.getValue() instanceof Double) {
+                    cell.setCellValue((Double) entry.getValue());
+                } else if (entry.getValue() instanceof Float) {
+                    cell.setCellValue((Float) entry.getValue());
+                } else if (entry.getValue() instanceof Boolean) {
+                    cell.setCellValue((Boolean) entry.getValue());
+                } else if (entry.getValue() instanceof Date) {
+                    cell.setCellValue((Date) entry.getValue());
+                } else if (entry.getValue() instanceof LocalDateTime) {
+                    cell.setCellValue((LocalDateTime) entry.getValue());
+                }
+            }
+        }
+    }
+
+    public static void addRows(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows, Boolean checkCellColor) {
+
+        CellStyle style = workbook.createCellStyle();
+        style.setWrapText(true);
+        ExcelGlobal excelGlobal = new ExcelGlobal();
+
+        int rowCount = 1;
+        for (Map<String, Object> row : dataRows) {
+            Sheet sheet = workbook.getSheet(sheetName);
+            if(sheet == null) {
+                sheet = workbook.createSheet(sheetName);
+            }
+            rowCount = sheet.getLastRowNum() + 1;
+            Row dataRow = sheet.createRow(rowCount++);
+            int columnCount = 0;
+            for (Map.Entry<String, Object> entry : row.entrySet()) {
+                Cell cell = dataRow.createCell(columnCount++);
+
+                if(checkCellColor != null && checkCellColor){
+                    if(row.containsKey(entry.getKey() + excelGlobal.getCellColorSuffix())){
+                        Short color = (Short) row.get(entry.getKey() + excelGlobal.getCellColorSuffix());
+                        style = addCellStyle(workbook, sheetName, color, null, true);
+                        setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+                        continue;
+                    }
+                }
+
                 if (entry.getValue() instanceof String) {
                     cell.setCellValue((String) entry.getValue());
                 } else if (entry.getValue() instanceof Integer) {
@@ -133,6 +190,7 @@ public class ExcelUtil {
             int columnCount = 0;
             for (Map.Entry<String, Object> entry : row.entrySet()) {
                 Cell cell = dataRow.createCell(columnCount++);
+
                 if (entry.getValue() instanceof String) {
                     cell.setCellValue((String) entry.getValue());
                 } else if (entry.getValue() instanceof Integer) {
@@ -236,5 +294,38 @@ public class ExcelUtil {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static CellStyle addCellStyle(Workbook workbook, String sheetName, Short color, FillPatternType fillPatternType, Boolean setWrapText) {
+
+        CellStyle style = workbook.createCellStyle();
+
+        if(color != null) {
+            style.setFillForegroundColor(color);
+            style.setFillPattern(Objects.requireNonNullElse(fillPatternType, FillPatternType.SOLID_FOREGROUND));
+        }
+        if(setWrapText != null && setWrapText) {
+            style.setWrapText(true);
+        }
+
+        return style;
+    }
+
+    public static XSSFFont addFontStyle(Workbook workbook, String fontName, Short fontHeightInPoints, Boolean isBold) {
+
+        XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
+        XSSFFont font = xssfWorkbook.createFont();
+
+        if(fontName != null) {
+            font.setFontName(fontName);
+        }
+        if(fontHeightInPoints != null) {
+            font.setFontHeightInPoints(fontHeightInPoints);
+        }
+        if(isBold != null && isBold) {
+            font.setBold(true);
+        }
+
+        return font;
     }
 }
