@@ -6,7 +6,7 @@
 
     <groupId>org.pabuff</groupId>
     <artifactId>util</artifactId>
-    <version>2.30.2-SNAPSHOT</version>
+    <version>2.30.4</version>
 
     <distributionManagement>
         <repository>
