@@ -14,6 +14,7 @@ import java.util.Map;
 public class ExcelGlobal {
     private final String cellColorSuffix;
     private final String cellFillPatternSuffix;
+    private final String cellWrapTextSuffix;
 
     private final String fontColorSuffix;
     private final String fontNameSuffix;
@@ -24,6 +25,7 @@ public class ExcelGlobal {
     public ExcelGlobal(Map<String, Object> map) {
         this.cellColorSuffix = map.get("cell_color") != null ? (String) map.get("cell_color") : null;
         this.cellFillPatternSuffix = map.get("cell_fill_pattern") != null ? (String) map.get("cell_fill_pattern") : null;
+        this.cellWrapTextSuffix = map.get("cell_wrap_text") != null ? (String) map.get("cell_wrap_text") : null;
 
         this.fontColorSuffix = map.get("font_color") != null ? (String) map.get("font_color") : null;
         this.fontNameSuffix =  map.get("font_name") != null ? (String) map.get("font_name") : null;

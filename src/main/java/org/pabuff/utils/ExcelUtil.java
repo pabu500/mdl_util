@@ -102,18 +102,21 @@ public class ExcelUtil {
                 if(excelGlobal != null){
                     // Retrieve suffix values
                     String cellColorSuffix = excelGlobal.getCellColorSuffix();
+                    String cellWrapTextSuffix = excelGlobal.getCellWrapTextSuffix();
+                    String cellFillPatternSuffix = excelGlobal.getCellFillPatternSuffix();
+
                     String fontColorSuffix = excelGlobal.getFontColorSuffix();
                     String fontNameSuffix = excelGlobal.getFontNameSuffix();
-                    String cellFillPatternSuffix = excelGlobal.getCellFillPatternSuffix();
                     String fontBoldSuffix = excelGlobal.getFontBoldSuffix();
                     String fontHeightInPointsSuffix = excelGlobal.getFontHeightInPointsSuffix();
                     String fontItalicSuffix = excelGlobal.getFontItalicSuffix();
 
                     // Check for non-empty suffixes
                     if ((cellColorSuffix != null && !cellColorSuffix.isEmpty() && entry.getKey().contains(cellColorSuffix)) ||
+                            (cellFillPatternSuffix != null && !cellFillPatternSuffix.isEmpty() && entry.getKey().contains(cellFillPatternSuffix)) ||
+                            (cellWrapTextSuffix != null && !cellWrapTextSuffix.isEmpty() && entry.getKey().contains(cellWrapTextSuffix)) ||
                             (fontColorSuffix != null && !fontColorSuffix.isEmpty() && entry.getKey().contains(fontColorSuffix)) ||
                             (fontNameSuffix != null && !fontNameSuffix.isEmpty() && entry.getKey().contains(fontNameSuffix)) ||
-                            (cellFillPatternSuffix != null && !cellFillPatternSuffix.isEmpty() && entry.getKey().contains(cellFillPatternSuffix)) ||
                             (fontBoldSuffix != null && !fontBoldSuffix.isEmpty() && entry.getKey().contains(fontBoldSuffix)) ||
                             (fontHeightInPointsSuffix != null && !fontHeightInPointsSuffix.isEmpty() && entry.getKey().contains(fontHeightInPointsSuffix)) ||
                             (fontItalicSuffix != null && !fontItalicSuffix.isEmpty() && entry.getKey().contains(fontItalicSuffix))) {
@@ -126,6 +129,7 @@ public class ExcelUtil {
                 if(excelGlobal != null){
                     Short color = null;
                     FillPatternType fillPattern = null;
+                    Boolean wrapText = null;
                     String fontName = null;
                     Short fontHeight = null;
                     Boolean isBold = null;
@@ -137,6 +141,9 @@ public class ExcelUtil {
                     }
                     if(excelGlobal.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getCellFillPatternSuffix())) {
                         fillPattern = (FillPatternType) row.get(entry.getKey() + excelGlobal.getCellFillPatternSuffix());
+                    }
+                    if (excelGlobal.getCellWrapTextSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getCellWrapTextSuffix())) {
+                        wrapText = (Boolean) row.get(entry.getKey() + excelGlobal.getCellWrapTextSuffix());
                     }
 
                     if(excelGlobal.getFontNameSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontNameSuffix())) {
@@ -156,7 +163,7 @@ public class ExcelUtil {
                     }
 
                         Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
-                        CellStyle style = addCellStyle(workbook, sheetName, color, fillPattern, null, font);
+                        CellStyle style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
                         setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
                         continue;
 
@@ -270,18 +277,21 @@ public class ExcelUtil {
                 if(excelGlobal != null){
                     // Retrieve suffix values
                     String cellColorSuffix = excelGlobal.getCellColorSuffix();
+                    String cellWrapTextSuffix = excelGlobal.getCellWrapTextSuffix();
+                    String cellFillPatternSuffix = excelGlobal.getCellFillPatternSuffix();
+
                     String fontColorSuffix = excelGlobal.getFontColorSuffix();
                     String fontNameSuffix = excelGlobal.getFontNameSuffix();
-                    String cellFillPatternSuffix = excelGlobal.getCellFillPatternSuffix();
                     String fontBoldSuffix = excelGlobal.getFontBoldSuffix();
                     String fontHeightInPointsSuffix = excelGlobal.getFontHeightInPointsSuffix();
                     String fontItalicSuffix = excelGlobal.getFontItalicSuffix();
 
                     // Check for non-empty suffixes
                     if ((cellColorSuffix != null && !cellColorSuffix.isEmpty() && entry.getKey().contains(cellColorSuffix)) ||
+                            (cellFillPatternSuffix != null && !cellFillPatternSuffix.isEmpty() && entry.getKey().contains(cellFillPatternSuffix)) ||
+                            (cellWrapTextSuffix != null && !cellWrapTextSuffix.isEmpty() && entry.getKey().contains(cellWrapTextSuffix)) ||
                             (fontColorSuffix != null && !fontColorSuffix.isEmpty() && entry.getKey().contains(fontColorSuffix)) ||
                             (fontNameSuffix != null && !fontNameSuffix.isEmpty() && entry.getKey().contains(fontNameSuffix)) ||
-                            (cellFillPatternSuffix != null && !cellFillPatternSuffix.isEmpty() && entry.getKey().contains(cellFillPatternSuffix)) ||
                             (fontBoldSuffix != null && !fontBoldSuffix.isEmpty() && entry.getKey().contains(fontBoldSuffix)) ||
                             (fontHeightInPointsSuffix != null && !fontHeightInPointsSuffix.isEmpty() && entry.getKey().contains(fontHeightInPointsSuffix)) ||
                             (fontItalicSuffix != null && !fontItalicSuffix.isEmpty() && entry.getKey().contains(fontItalicSuffix))) {
@@ -294,6 +304,7 @@ public class ExcelUtil {
                 if(excelGlobal != null){
                     Short color = null;
                     FillPatternType fillPattern = null;
+                    Boolean wrapText = null;
                     String fontName = null;
                     Short fontHeight = null;
                     Boolean isBold = null;
@@ -305,6 +316,9 @@ public class ExcelUtil {
                     }
                     if(excelGlobal.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getCellFillPatternSuffix())) {
                         fillPattern = (FillPatternType) row.get(entry.getKey() + excelGlobal.getCellFillPatternSuffix());
+                    }
+                    if (excelGlobal.getCellWrapTextSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getCellWrapTextSuffix())) {
+                        wrapText = (Boolean) row.get(entry.getKey() + excelGlobal.getCellWrapTextSuffix());
                     }
 
                     if(excelGlobal.getFontNameSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontNameSuffix())) {
@@ -324,7 +338,7 @@ public class ExcelUtil {
                     }
 
                     Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
-                    style = addCellStyle(workbook, sheetName, color, fillPattern, null, font);
+                    style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
                     setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
                     continue;
 
