@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="99a4c8ef-7cdb-41d4-bce4-d3fa459912bf" name="Changes" comment="add check cell color features">
+    <list default="true" id="99a4c8ef-7cdb-41d4-bce4-d3fa459912bf" name="Changes" comment="add check cell, font color features">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/pabuff/utils/ExcelGlobal.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/pabuff/utils/ExcelGlobal.java" afterDir="false" />
@@ -61,7 +61,8 @@
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/_pa/_ref/test&quot;
+    &quot;last_opened_file_path&quot;: &quot;D:/_pa/_ref/test&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.repository.indices&quot;
   }
 }</component>
   <component name="RunManager">
@@ -191,7 +192,15 @@
       <option name="project" value="LOCAL" />
       <updated>1723702923089</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="add check cell, font color features">
+      <option name="closed" value="true" />
+      <created>1723796427801</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1723796427801</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -211,27 +220,7 @@
     <MESSAGE value="refactor package" />
     <MESSAGE value="add alignToDayStart and alignToDayEnd" />
     <MESSAGE value="add check cell color features" />
-    <option name="LAST_COMMIT_MESSAGE" value="add check cell color features" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/org/pabuff/utils/ExcelUtil.java</url>
-          <line>443</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/org/pabuff/utils/ExcelUtil.java</url>
-          <line>422</line>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/org/pabuff/utils/ExcelUtil.java</url>
-          <line>127</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="add check cell, font color features" />
+    <option name="LAST_COMMIT_MESSAGE" value="add check cell, font color features" />
   </component>
 </project>

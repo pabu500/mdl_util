@@ -59,7 +59,7 @@ public class ExcelUtil {
                                 LinkedHashMap<String, Integer> headers,
                                 List<LinkedHashMap<String, Object>> dataRows,
                                 CellStyle headerStyle, XSSFFont headerFont,
-                                Boolean checkCellColor) {
+                                Map<String, Object> excelMap) {
         if(headerStyle == null) {
             headerStyle = workbook.createCellStyle();
             headerStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
@@ -68,7 +68,6 @@ public class ExcelUtil {
         }
 
         XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
-        ExcelGlobal excelGlobal = new ExcelGlobal();
 
         if(headerFont == null) {
             headerFont = xssfWorkbook.createFont();
@@ -90,44 +89,77 @@ public class ExcelUtil {
             columnCount++;
         }
 
+        ExcelGlobal excelGlobal = null;
+        if(excelMap != null && !excelMap.isEmpty()) {
+            excelGlobal = new ExcelGlobal(excelMap);
+        }
+
         for (Map<String, Object> row : dataRows) {
             Row dataRow = sheet.createRow(rowCount++);
             columnCount = 0;
             for (Map.Entry<String, Object> entry : row.entrySet()) {
 
-                if(entry.getKey().contains(excelGlobal.getCellColorSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontColorSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontNameSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getCellFillPatternSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontSizeSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontBoldSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontHeightInPointsSuffix())) {
-                    continue;
+                if(excelGlobal != null){
+                    // Retrieve suffix values
+                    String cellColorSuffix = excelGlobal.getCellColorSuffix();
+                    String fontColorSuffix = excelGlobal.getFontColorSuffix();
+                    String fontNameSuffix = excelGlobal.getFontNameSuffix();
+                    String cellFillPatternSuffix = excelGlobal.getCellFillPatternSuffix();
+                    String fontBoldSuffix = excelGlobal.getFontBoldSuffix();
+                    String fontHeightInPointsSuffix = excelGlobal.getFontHeightInPointsSuffix();
+                    String fontItalicSuffix = excelGlobal.getFontItalicSuffix();
+
+                    // Check for non-empty suffixes
+                    if ((cellColorSuffix != null && !cellColorSuffix.isEmpty() && entry.getKey().contains(cellColorSuffix)) ||
+                            (fontColorSuffix != null && !fontColorSuffix.isEmpty() && entry.getKey().contains(fontColorSuffix)) ||
+                            (fontNameSuffix != null && !fontNameSuffix.isEmpty() && entry.getKey().contains(fontNameSuffix)) ||
+                            (cellFillPatternSuffix != null && !cellFillPatternSuffix.isEmpty() && entry.getKey().contains(cellFillPatternSuffix)) ||
+                            (fontBoldSuffix != null && !fontBoldSuffix.isEmpty() && entry.getKey().contains(fontBoldSuffix)) ||
+                            (fontHeightInPointsSuffix != null && !fontHeightInPointsSuffix.isEmpty() && entry.getKey().contains(fontHeightInPointsSuffix)) ||
+                            (fontItalicSuffix != null && !fontItalicSuffix.isEmpty() && entry.getKey().contains(fontItalicSuffix))) {
+                        continue;
+                    }
                 }
 
                 Cell cell = dataRow.createCell(columnCount++);
 
-                if(checkCellColor != null && checkCellColor){
-                    if(row.containsKey(entry.getKey() + excelGlobal.getCellColorSuffix())){
-                        Short color = (Short) row.get(entry.getKey() + excelGlobal.getCellColorSuffix());
-                        FillPatternType fillPattern = row.containsKey(entry.getKey() + excelGlobal.getCellFillPatternSuffix()) ?
-                                (FillPatternType) row.get(entry.getKey() + excelGlobal.getCellFillPatternSuffix()) : null;
+                if(excelGlobal != null){
+                    Short color = null;
+                    FillPatternType fillPattern = null;
+                    String fontName = null;
+                    Short fontHeight = null;
+                    Boolean isBold = null;
+                    Short fontColor = null;
+                    Boolean isItalic = null;
 
-                        String fontName = row.containsKey(entry.getKey() + excelGlobal.getFontNameSuffix()) ?
-                                (String) row.get(entry.getKey() + excelGlobal.getFontNameSuffix()) : null;
-                        Short fontHeight = row.containsKey(entry.getKey() + excelGlobal.getFontSizeSuffix()) ?
-                                (Short) row.get(entry.getKey() + excelGlobal.getFontSizeSuffix()) : null;
-                        Boolean isBold = row.containsKey(entry.getKey() + excelGlobal.getFontBoldSuffix()) ?
-                                (Boolean) row.get(entry.getKey() + excelGlobal.getFontBoldSuffix()) : null;
-                        Short fontColor = row.containsKey(entry.getKey() + excelGlobal.getFontColorSuffix()) ?
-                                (Short) row.get(entry.getKey() + excelGlobal.getFontColorSuffix()) : null;
+                    if(excelGlobal.getCellColorSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getCellColorSuffix())) {
+                        color = (Short) row.get(entry.getKey() + excelGlobal.getCellColorSuffix());
+                    }
+                    if(excelGlobal.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getCellFillPatternSuffix())) {
+                        fillPattern = (FillPatternType) row.get(entry.getKey() + excelGlobal.getCellFillPatternSuffix());
+                    }
 
-                        Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold);
+                    if(excelGlobal.getFontNameSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontNameSuffix())) {
+                        fontName = (String) row.get(entry.getKey() + excelGlobal.getFontNameSuffix());
+                    }
+                    if(excelGlobal.getFontHeightInPointsSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontHeightInPointsSuffix())) {
+                        fontHeight = (Short) row.get(entry.getKey() + excelGlobal.getFontHeightInPointsSuffix());
+                    }
+                    if(excelGlobal.getFontBoldSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontBoldSuffix())) {
+                        isBold = (Boolean) row.get(entry.getKey() + excelGlobal.getFontBoldSuffix());
+                    }
+                    if(excelGlobal.getFontItalicSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontItalicSuffix())) {
+                        isItalic = (Boolean) row.get(entry.getKey() + excelGlobal.getFontItalicSuffix());
+                    }
+                    if(excelGlobal.getFontColorSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontColorSuffix())) {
+                        fontColor = (Short) row.get(entry.getKey() + excelGlobal.getFontColorSuffix());
+                    }
 
+                        Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
                         CellStyle style = addCellStyle(workbook, sheetName, color, fillPattern, null, font);
                         setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
                         continue;
-                    }
+
                 }
 
                 if (entry.getValue() instanceof String) {
@@ -151,6 +183,7 @@ public class ExcelUtil {
         }
     }
 
+    @Deprecated
     public static void addSheet(Workbook workbook,
                                 String sheetName,
                                 LinkedHashMap<String, Integer> headers,
@@ -165,7 +198,6 @@ public class ExcelUtil {
         }
 
         XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
-        ExcelGlobal excelGlobal = new ExcelGlobal();
 
         if(headerFont == null) {
             headerFont = xssfWorkbook.createFont();
@@ -214,11 +246,15 @@ public class ExcelUtil {
         }
     }
 
-    public static void addRows(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows, Boolean checkCellColor) {
+    public static void addRows(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows, Map<String, Object> excelMap) {
 
         CellStyle style = workbook.createCellStyle();
         style.setWrapText(true);
-        ExcelGlobal excelGlobal = new ExcelGlobal();
+        ExcelGlobal excelGlobal = null;
+
+        if(excelMap != null && !excelMap.isEmpty()) {
+            excelGlobal = new ExcelGlobal(excelMap);
+        }
 
         int rowCount = 1;
         for (Map<String, Object> row : dataRows) {
@@ -231,39 +267,67 @@ public class ExcelUtil {
             int columnCount = 0;
             for (Map.Entry<String, Object> entry : row.entrySet()) {
 
-                if(entry.getKey().contains(excelGlobal.getCellColorSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontColorSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontNameSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getCellFillPatternSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontSizeSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontBoldSuffix()) ||
-                        entry.getKey().contains(excelGlobal.getFontHeightInPointsSuffix())) {
-                    continue;
+                if(excelGlobal != null){
+                    // Retrieve suffix values
+                    String cellColorSuffix = excelGlobal.getCellColorSuffix();
+                    String fontColorSuffix = excelGlobal.getFontColorSuffix();
+                    String fontNameSuffix = excelGlobal.getFontNameSuffix();
+                    String cellFillPatternSuffix = excelGlobal.getCellFillPatternSuffix();
+                    String fontBoldSuffix = excelGlobal.getFontBoldSuffix();
+                    String fontHeightInPointsSuffix = excelGlobal.getFontHeightInPointsSuffix();
+                    String fontItalicSuffix = excelGlobal.getFontItalicSuffix();
+
+                    // Check for non-empty suffixes
+                    if ((cellColorSuffix != null && !cellColorSuffix.isEmpty() && entry.getKey().contains(cellColorSuffix)) ||
+                            (fontColorSuffix != null && !fontColorSuffix.isEmpty() && entry.getKey().contains(fontColorSuffix)) ||
+                            (fontNameSuffix != null && !fontNameSuffix.isEmpty() && entry.getKey().contains(fontNameSuffix)) ||
+                            (cellFillPatternSuffix != null && !cellFillPatternSuffix.isEmpty() && entry.getKey().contains(cellFillPatternSuffix)) ||
+                            (fontBoldSuffix != null && !fontBoldSuffix.isEmpty() && entry.getKey().contains(fontBoldSuffix)) ||
+                            (fontHeightInPointsSuffix != null && !fontHeightInPointsSuffix.isEmpty() && entry.getKey().contains(fontHeightInPointsSuffix)) ||
+                            (fontItalicSuffix != null && !fontItalicSuffix.isEmpty() && entry.getKey().contains(fontItalicSuffix))) {
+                        continue;
+                    }
                 }
 
                 Cell cell = dataRow.createCell(columnCount++);
 
-                if(checkCellColor != null && checkCellColor){
-                    if(row.containsKey(entry.getKey() + excelGlobal.getCellColorSuffix())){
-                        Short color = (Short) row.get(entry.getKey() + excelGlobal.getCellColorSuffix());
-                        FillPatternType fillPattern = row.containsKey(entry.getKey() + excelGlobal.getCellFillPatternSuffix()) ?
-                                (FillPatternType) row.get(entry.getKey() + excelGlobal.getCellFillPatternSuffix()) : null;
+                if(excelGlobal != null){
+                    Short color = null;
+                    FillPatternType fillPattern = null;
+                    String fontName = null;
+                    Short fontHeight = null;
+                    Boolean isBold = null;
+                    Short fontColor = null;
+                    Boolean isItalic = null;
 
-                        String fontName = row.containsKey(entry.getKey() + excelGlobal.getFontNameSuffix()) ?
-                                (String) row.get(entry.getKey() + excelGlobal.getFontNameSuffix()) : null;
-                        Short fontHeight = row.containsKey(entry.getKey() + excelGlobal.getFontSizeSuffix()) ?
-                                (Short) row.get(entry.getKey() + excelGlobal.getFontSizeSuffix()) : null;
-                        Boolean isBold = row.containsKey(entry.getKey() + excelGlobal.getFontBoldSuffix()) ?
-                                (Boolean) row.get(entry.getKey() + excelGlobal.getFontBoldSuffix()) : null;
-                        Short fontColor = row.containsKey(entry.getKey() + excelGlobal.getFontColorSuffix()) ?
-                                (Short) row.get(entry.getKey() + excelGlobal.getFontColorSuffix()) : null;
-
-                        Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold);
-
-                        style = addCellStyle(workbook, sheetName, color, fillPattern, true, font);
-                        setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
-                        continue;
+                    if(excelGlobal.getCellColorSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getCellColorSuffix())) {
+                        color = (Short) row.get(entry.getKey() + excelGlobal.getCellColorSuffix());
                     }
+                    if(excelGlobal.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getCellFillPatternSuffix())) {
+                        fillPattern = (FillPatternType) row.get(entry.getKey() + excelGlobal.getCellFillPatternSuffix());
+                    }
+
+                    if(excelGlobal.getFontNameSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontNameSuffix())) {
+                        fontName = (String) row.get(entry.getKey() + excelGlobal.getFontNameSuffix());
+                    }
+                    if(excelGlobal.getFontHeightInPointsSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontHeightInPointsSuffix())) {
+                        fontHeight = (Short) row.get(entry.getKey() + excelGlobal.getFontHeightInPointsSuffix());
+                    }
+                    if(excelGlobal.getFontBoldSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontBoldSuffix())) {
+                        isBold = (Boolean) row.get(entry.getKey() + excelGlobal.getFontBoldSuffix());
+                    }
+                    if(excelGlobal.getFontItalicSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontItalicSuffix())) {
+                        isItalic = (Boolean) row.get(entry.getKey() + excelGlobal.getFontItalicSuffix());
+                    }
+                    if(excelGlobal.getFontColorSuffix() != null && row.containsKey(entry.getKey() + excelGlobal.getFontColorSuffix())) {
+                        fontColor = (Short) row.get(entry.getKey() + excelGlobal.getFontColorSuffix());
+                    }
+
+                    Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                    style = addCellStyle(workbook, sheetName, color, fillPattern, null, font);
+                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+                    continue;
+
                 }
 
                 if (entry.getValue() instanceof String) {
@@ -287,6 +351,7 @@ public class ExcelUtil {
         }
     }
 
+    @Deprecated
     public static void addRows(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows) {
 
         CellStyle style = workbook.createCellStyle();
@@ -427,7 +492,7 @@ public class ExcelUtil {
         return style;
     }
 
-    public static XSSFFont addFontStyle(Workbook workbook, String fontName, Short fontColor, Short fontHeightInPoints, Boolean isBold) {
+    public static XSSFFont addFontStyle(Workbook workbook, String fontName, Short fontColor, Short fontHeightInPoints, Boolean isBold, Boolean isItalic) {
 
         XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
         XSSFFont font = xssfWorkbook.createFont();
@@ -443,6 +508,9 @@ public class ExcelUtil {
         }
         if(fontColor != null) {
             font.setColor(fontColor);
+        }
+        if(isItalic != null && isItalic) {
+            font.setItalic(true);
         }
 
         return font;
