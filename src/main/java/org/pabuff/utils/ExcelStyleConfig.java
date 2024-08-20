@@ -2,16 +2,11 @@ package org.pabuff.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
-import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
 import java.util.Map;
 
 @Getter
 @AllArgsConstructor
-@Component
-public class ExcelGlobal {
+public class ExcelStyleConfig {
     private final String cellColorSuffix;
     private final String cellFillPatternSuffix;
     private final String cellWrapTextSuffix;
@@ -22,7 +17,7 @@ public class ExcelGlobal {
     private final String fontBoldSuffix;
     private final String fontItalicSuffix;
 
-    public ExcelGlobal(Map<String, Object> map) {
+    public ExcelStyleConfig(Map<String, Object> map) {
         this.cellColorSuffix = map.get("cell_color") != null ? (String) map.get("cell_color") : null;
         this.cellFillPatternSuffix = map.get("cell_fill_pattern") != null ? (String) map.get("cell_fill_pattern") : null;
         this.cellWrapTextSuffix = map.get("cell_wrap_text") != null ? (String) map.get("cell_wrap_text") : null;
