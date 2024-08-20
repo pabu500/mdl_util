@@ -54,7 +54,7 @@ public class ExcelUtil {
         return workbook;
     }
 
-    public static void addSheet(Workbook workbook,
+    public static void addSheet2(Workbook workbook,
                                 String sheetName,
                                 LinkedHashMap<String, Integer> headers,
                                 List<LinkedHashMap<String, Object>> dataRows,
@@ -190,7 +190,6 @@ public class ExcelUtil {
         }
     }
 
-    @Deprecated
     public static void addSheet(Workbook workbook,
                                 String sheetName,
                                 LinkedHashMap<String, Integer> headers,
@@ -253,7 +252,7 @@ public class ExcelUtil {
         }
     }
 
-    public static void addRows(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows, Map<String, Object> excelMap) {
+    public static void addRows2(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows, Map<String, Object> excelMap) {
 
         CellStyle style = workbook.createCellStyle();
         style.setWrapText(true);
@@ -365,7 +364,6 @@ public class ExcelUtil {
         }
     }
 
-    @Deprecated
     public static void addRows(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows) {
 
         CellStyle style = workbook.createCellStyle();
