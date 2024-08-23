@@ -2,6 +2,8 @@ package org.pabuff.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.lang.reflect.Field;
 import java.util.Map;
 
 @Getter
@@ -27,6 +29,25 @@ public class ExcelStyleConfig {
         this.fontHeightInPointsSuffix = map.get("font_height") != null ? (String) map.get("font_height") : null;
         this.fontBoldSuffix = map.get("font_bold") != null ? (String) map.get("font_bold") : null;
         this.fontItalicSuffix = map.get("font_italic") != null ? (String) map.get("font_italic") : null;
+    }
+
+    //check str contains any of the suffix
+    public boolean containsAnySuffix(String str) {
+        Field[] fields = this.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            if (field.getType().equals(String.class)) {
+                field.setAccessible(true); // Make private fields accessible
+                try {
+                    String value = (String) field.get(this);
+                    if (value != null && str.contains(value)) {
+                        return true;
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException("Failed to access field value", e);
+                }
+            }
+        }
+        return false;
     }
 }
 
