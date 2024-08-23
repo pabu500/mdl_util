@@ -7,6 +7,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -100,26 +101,7 @@ public class ExcelUtil {
             for (Map.Entry<String, Object> entry : row.entrySet()) {
 
                 if(excelStyleConfig != null){
-                    // Retrieve suffix values
-                    String cellColorSuffix = excelStyleConfig.getCellColorSuffix();
-                    String cellWrapTextSuffix = excelStyleConfig.getCellWrapTextSuffix();
-                    String cellFillPatternSuffix = excelStyleConfig.getCellFillPatternSuffix();
-
-                    String fontColorSuffix = excelStyleConfig.getFontColorSuffix();
-                    String fontNameSuffix = excelStyleConfig.getFontNameSuffix();
-                    String fontBoldSuffix = excelStyleConfig.getFontBoldSuffix();
-                    String fontHeightInPointsSuffix = excelStyleConfig.getFontHeightInPointsSuffix();
-                    String fontItalicSuffix = excelStyleConfig.getFontItalicSuffix();
-
-                    // Check for non-empty suffixes
-                    if ((cellColorSuffix != null && !cellColorSuffix.isEmpty() && entry.getKey().contains(cellColorSuffix)) ||
-                            (cellFillPatternSuffix != null && !cellFillPatternSuffix.isEmpty() && entry.getKey().contains(cellFillPatternSuffix)) ||
-                            (cellWrapTextSuffix != null && !cellWrapTextSuffix.isEmpty() && entry.getKey().contains(cellWrapTextSuffix)) ||
-                            (fontColorSuffix != null && !fontColorSuffix.isEmpty() && entry.getKey().contains(fontColorSuffix)) ||
-                            (fontNameSuffix != null && !fontNameSuffix.isEmpty() && entry.getKey().contains(fontNameSuffix)) ||
-                            (fontBoldSuffix != null && !fontBoldSuffix.isEmpty() && entry.getKey().contains(fontBoldSuffix)) ||
-                            (fontHeightInPointsSuffix != null && !fontHeightInPointsSuffix.isEmpty() && entry.getKey().contains(fontHeightInPointsSuffix)) ||
-                            (fontItalicSuffix != null && !fontItalicSuffix.isEmpty() && entry.getKey().contains(fontItalicSuffix))) {
+                    if(excelStyleConfig.containsAnySuffix(entry.getKey())){
                         continue;
                     }
                 }
@@ -274,26 +256,7 @@ public class ExcelUtil {
             for (Map.Entry<String, Object> entry : row.entrySet()) {
 
                 if(excelStyleConfig != null){
-                    // Retrieve suffix values
-                    String cellColorSuffix = excelStyleConfig.getCellColorSuffix();
-                    String cellWrapTextSuffix = excelStyleConfig.getCellWrapTextSuffix();
-                    String cellFillPatternSuffix = excelStyleConfig.getCellFillPatternSuffix();
-
-                    String fontColorSuffix = excelStyleConfig.getFontColorSuffix();
-                    String fontNameSuffix = excelStyleConfig.getFontNameSuffix();
-                    String fontBoldSuffix = excelStyleConfig.getFontBoldSuffix();
-                    String fontHeightInPointsSuffix = excelStyleConfig.getFontHeightInPointsSuffix();
-                    String fontItalicSuffix = excelStyleConfig.getFontItalicSuffix();
-
-                    // Check for non-empty suffixes
-                    if ((cellColorSuffix != null && !cellColorSuffix.isEmpty() && entry.getKey().contains(cellColorSuffix)) ||
-                            (cellFillPatternSuffix != null && !cellFillPatternSuffix.isEmpty() && entry.getKey().contains(cellFillPatternSuffix)) ||
-                            (cellWrapTextSuffix != null && !cellWrapTextSuffix.isEmpty() && entry.getKey().contains(cellWrapTextSuffix)) ||
-                            (fontColorSuffix != null && !fontColorSuffix.isEmpty() && entry.getKey().contains(fontColorSuffix)) ||
-                            (fontNameSuffix != null && !fontNameSuffix.isEmpty() && entry.getKey().contains(fontNameSuffix)) ||
-                            (fontBoldSuffix != null && !fontBoldSuffix.isEmpty() && entry.getKey().contains(fontBoldSuffix)) ||
-                            (fontHeightInPointsSuffix != null && !fontHeightInPointsSuffix.isEmpty() && entry.getKey().contains(fontHeightInPointsSuffix)) ||
-                            (fontItalicSuffix != null && !fontItalicSuffix.isEmpty() && entry.getKey().contains(fontItalicSuffix))) {
+                    if(excelStyleConfig.containsAnySuffix(entry.getKey())){
                         continue;
                     }
                 }
@@ -466,6 +429,56 @@ public class ExcelUtil {
 
                 style.setFont(keyFont);
             }
+
+            if(entry.get("style") instanceof Map){
+                Map<String, Object> styleMap = (Map<String, Object>) entry.get("style");
+                Short color = null;
+                FillPatternType fillPattern = null;
+                Boolean wrapText = null;
+                String fontName = null;
+                Short fontHeight = null;
+                Boolean isBold = null;
+                Short fontColor = null;
+                Boolean isItalic = null;
+
+                if("key".equals(styleMap.get("style"))){
+                    color = IndexedColors.YELLOW.getIndex();
+                    fillPattern = FillPatternType.SOLID_FOREGROUND;
+                    fontName = "Arial";
+                    fontHeight = 12;
+                    isBold = true;
+                    isItalic = false;
+                }
+
+                if(styleMap.containsKey("cell_color")) {
+                    color = (Short) styleMap.get("cell_color");
+                }
+                if(styleMap.containsKey("cell_fill_pattern")) {
+                    fillPattern = (FillPatternType) styleMap.get("cell_fill_pattern");
+                }
+                if(styleMap.containsKey("cell_wrap_text")) {
+                    wrapText = (Boolean) styleMap.get("cell_wrap_text");
+                }
+
+                if(styleMap.containsKey("font_name")) {
+                    fontName = (String) styleMap.get("font_name");
+                }
+                if(styleMap.containsKey("font_height")) {
+                    fontHeight = (Short) styleMap.get("font_height");
+                }
+                if(styleMap.containsKey("font_bold")) {
+                    isBold = (Boolean) styleMap.get("font_bold");
+                }
+                if(styleMap.containsKey("font_italic")) {
+                    isItalic = (Boolean) styleMap.get("font_italic");
+                }
+                if(styleMap.containsKey("font_color")) {
+                    fontColor = (Short) styleMap.get("font_color");
+                }
+
+                Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+            }
             setCell(workbook, sheetName, row, col, value, width, style);
         }
     }
@@ -527,4 +540,5 @@ public class ExcelUtil {
 
         return font;
     }
+
 }
