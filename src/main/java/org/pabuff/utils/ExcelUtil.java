@@ -1,6 +1,7 @@
 package org.pabuff.utils;
 
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -110,16 +111,23 @@ public class ExcelUtil {
 
                 if(excelStyleConfig != null){
                     Short color = null;
+                    XSSFColor xssfColor = null;
                     FillPatternType fillPattern = null;
                     Boolean wrapText = null;
                     String fontName = null;
                     Short fontHeight = null;
                     Boolean isBold = null;
                     Short fontColor = null;
+                    XSSFColor xssfFontColor = null;
                     Boolean isItalic = null;
 
                     if(excelStyleConfig.getCellColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellColorSuffix())) {
-                        color = (Short) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+                        if( row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix()) instanceof XSSFColor){
+                            xssfColor = (XSSFColor) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+                        }
+                        else{
+                            color = (Short) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+                        }
                     }
                     if(excelStyleConfig.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix())) {
                         fillPattern = (FillPatternType) row.get(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix());
@@ -141,14 +149,30 @@ public class ExcelUtil {
                         isItalic = (Boolean) row.get(entry.getKey() + excelStyleConfig.getFontItalicSuffix());
                     }
                     if(excelStyleConfig.getFontColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontColorSuffix())) {
-                        fontColor = (Short) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+                        if( row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix()) instanceof XSSFColor){
+                            xssfFontColor = (XSSFColor) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+                        }
+                        else{
+                            fontColor = (Short) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+                        }
                     }
 
-                        Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
-                        CellStyle style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
-                        setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
-                        continue;
+                    Font font;
+                    if (xssfFontColor != null) {
+                        font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
+                    } else {
+                        font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                    }
 
+                    CellStyle style;
+                    if (xssfColor != null) {
+                        style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
+                    } else {
+                        style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                    }
+
+                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+                    continue;
                 }
 
                 if (entry.getValue() instanceof String) {
@@ -265,16 +289,23 @@ public class ExcelUtil {
 
                 if(excelStyleConfig != null){
                     Short color = null;
+                    XSSFColor xssfColor = null;
                     FillPatternType fillPattern = null;
                     Boolean wrapText = null;
                     String fontName = null;
                     Short fontHeight = null;
                     Boolean isBold = null;
                     Short fontColor = null;
+                    XSSFColor xssfFontColor = null;
                     Boolean isItalic = null;
 
                     if(excelStyleConfig.getCellColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellColorSuffix())) {
-                        color = (Short) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+                        if( row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix()) instanceof XSSFColor){
+                            xssfColor = (XSSFColor) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+                        }
+                        else{
+                            color = (Short) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+                        }
                     }
                     if(excelStyleConfig.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix())) {
                         fillPattern = (FillPatternType) row.get(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix());
@@ -296,11 +327,27 @@ public class ExcelUtil {
                         isItalic = (Boolean) row.get(entry.getKey() + excelStyleConfig.getFontItalicSuffix());
                     }
                     if(excelStyleConfig.getFontColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontColorSuffix())) {
-                        fontColor = (Short) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+                        if( row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix()) instanceof XSSFColor){
+                            xssfFontColor = (XSSFColor) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+                        }
+                        else{
+                            fontColor = (Short) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+                        }
                     }
 
-                    Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
-                    style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                    Font font;
+                    if (xssfFontColor != null) {
+                        font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
+                    } else {
+                        font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                    }
+
+                    if (xssfColor != null) {
+                        style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
+                    } else {
+                        style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                    }
+
                     setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
                     continue;
 
@@ -517,7 +564,49 @@ public class ExcelUtil {
         return style;
     }
 
+    public static CellStyle addCellStyle2(Workbook workbook, String sheetName, XSSFColor color, FillPatternType fillPatternType, Boolean setWrapText, Font font) {
+
+        CellStyle style = workbook.createCellStyle();
+
+        if(workbook instanceof XSSFWorkbook && color != null) {
+            style.setFillForegroundColor(color);
+            style.setFillPattern(Objects.requireNonNullElse(fillPatternType, FillPatternType.SOLID_FOREGROUND));
+        }
+        if(setWrapText != null && setWrapText) {
+            style.setWrapText(true);
+        }
+        if(font != null) {
+            style.setFont(font);
+        }
+
+        return style;
+    }
+
     public static XSSFFont addFontStyle(Workbook workbook, String fontName, Short fontColor, Short fontHeightInPoints, Boolean isBold, Boolean isItalic) {
+
+        XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
+        XSSFFont font = xssfWorkbook.createFont();
+
+        if(fontName != null) {
+            font.setFontName(fontName);
+        }
+        if(fontHeightInPoints != null) {
+            font.setFontHeightInPoints(fontHeightInPoints);
+        }
+        if(isBold != null && isBold) {
+            font.setBold(true);
+        }
+        if(fontColor != null) {
+            font.setColor(fontColor);
+        }
+        if(isItalic != null && isItalic) {
+            font.setItalic(true);
+        }
+
+        return font;
+    }
+
+    public static XSSFFont addFontStyle2(Workbook workbook, String fontName, XSSFColor fontColor, Short fontHeightInPoints, Boolean isBold, Boolean isItalic) {
 
         XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
         XSSFFont font = xssfWorkbook.createFont();
