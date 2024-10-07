@@ -1,14 +1,13 @@
 package org.pabuff.utils;
 
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xddf.usermodel.chart.*;
+import org.apache.poi.xssf.usermodel.*;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -92,7 +91,12 @@ public class ExcelUtil {
         }
 
         ExcelStyleConfig excelStyleConfig = null;
+        List<Map<String, Object>> excelChartList = null;
         if(excelMap != null && !excelMap.isEmpty()) {
+            if(excelMap.get("excel_chart") != null){
+                excelChartList = (List<Map<String, Object>>) excelMap.get("excel_chart");
+                excelMap.remove("excel_chart");
+            }
             excelStyleConfig = new ExcelStyleConfig(excelMap);
         }
 
@@ -194,6 +198,34 @@ public class ExcelUtil {
                 }
             }
         }
+
+        if(excelChartList != null){
+            int i = 1;
+            for(Map<String, Object> excelChartMap : excelChartList){
+
+                if(excelChartMap.get("chart_data") == null){
+                    continue;
+                }
+
+                String chartName = "Chart" + i;
+                String chartTitle = excelChartMap.get("chart_title") != null ? (String) excelChartMap.get("chart_title") : chartName;
+                String x_axis_title = excelChartMap.get("x_axis_title") != null ? (String) excelChartMap.get("x_axis_title") : "X-Axis";
+                String y_axis_title = excelChartMap.get("y_axis_title") != null ? (String) excelChartMap.get("y_axis_title") : "Y-Axis";
+                int left = excelChartMap.get("left") != null ? (int) excelChartMap.get("left") : 0;
+                int top = excelChartMap.get("top") != null ? (int) excelChartMap.get("top") : 0;
+                int width = excelChartMap.get("width") != null ? (int) excelChartMap.get("width") : 5;
+                int height = excelChartMap.get("height") != null ? (int) excelChartMap.get("height") : 10;
+                Map<String, Object> chartData = (Map<String, Object>) excelChartMap.get("chart_data");
+                ChartTypes chartType = (ChartTypes) excelChartMap.get("chart_type");
+
+                if(chartData == null){
+                    continue;
+                }
+
+                addChart(workbook, sheetName, chartName, chartTitle, x_axis_title, y_axis_title, chartType, left, top, width, height, chartData);
+                i++;
+            }
+        }
     }
 
     public static void addSheet(Workbook workbook,
@@ -263,8 +295,13 @@ public class ExcelUtil {
         CellStyle style = workbook.createCellStyle();
         style.setWrapText(true);
         ExcelStyleConfig excelStyleConfig = null;
+        List<Map<String, Object>> excelChartList = null;
 
         if(excelMap != null && !excelMap.isEmpty()) {
+            if(excelMap.get("excel_chart") != null){
+                excelChartList = (List<Map<String, Object>>) excelMap.get("excel_chart");
+                excelMap.remove("excel_chart");
+            }
             excelStyleConfig = new ExcelStyleConfig(excelMap);
         }
 
@@ -370,6 +407,28 @@ public class ExcelUtil {
                 } else if (entry.getValue() instanceof LocalDateTime) {
                     cell.setCellValue((LocalDateTime) entry.getValue());
                 }
+            }
+        }
+
+        if(excelChartList != null){
+            int i = 1;
+            for(Map<String, Object> excelChartMap : excelChartList){
+                String chartName = "Chart" + i;
+                String chartTitle = excelChartMap.get("chart_title") != null ? (String) excelChartMap.get("chart_title") : chartName;
+                String x_axis_title = excelChartMap.get("x_axis_title") != null ? (String) excelChartMap.get("x_axis_title") : "X-Axis";
+                String y_axis_title = excelChartMap.get("y_axis_title") != null ? (String) excelChartMap.get("y_axis_title") : "Y-Axis";
+                int left = excelChartMap.get("left") != null ? (int) excelChartMap.get("left") : 0;
+                int top = excelChartMap.get("top") != null ? (int) excelChartMap.get("top") : 0;
+                int width = excelChartMap.get("width") != null ? (int) excelChartMap.get("width") : 5;
+                int height = excelChartMap.get("height") != null ? (int) excelChartMap.get("height") : 10;
+                Map<String, Object> chartData = (Map<String, Object>) excelChartMap.get("chart_data");
+                ChartTypes chartType = (ChartTypes) excelChartMap.get("chart_type");
+
+                if(chartData == null){
+                    continue;
+                }
+                addChart(workbook, sheetName, chartName, chartTitle, x_axis_title, y_axis_title, chartType, left, top, width, height, chartData);
+                i++;
             }
         }
     }
@@ -628,6 +687,108 @@ public class ExcelUtil {
         }
 
         return font;
+    }
+
+    public static void addChart(Workbook workbook, String sheetName, String chartName, String chartTitle, String xAxisTitle, String yAxisTitle, ChartTypes chartTypes, int left, int top, int width, int height, Map<String, Object> dataMap) {
+        XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
+        XSSFSheet sheet = xssfWorkbook.getSheet(sheetName);
+        if(sheet == null) {
+            sheet = xssfWorkbook.createSheet(sheetName);
+        }
+
+        if(dataMap.get("x_data_ranges") == null || dataMap.get("series_data") == null){
+            return;
+        }
+
+        int lastRow = sheet.getLastRowNum();
+        int chartRow = lastRow + top;
+        XSSFDrawing  drawing = sheet.createDrawingPatriarch();
+        ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, left, chartRow, left + width, chartRow + height);
+        XSSFChart chart = drawing.createChart(anchor);
+
+        chart.setTitleText(chartTitle);
+        chart.setTitleOverlay(false);
+
+        XDDFChartLegend legend = chart.getOrAddLegend();
+        legend.setPosition(LegendPosition.TOP_RIGHT);
+
+        List<String> xDataRanges = (List<String>) dataMap.get("x_data_ranges");
+        XDDFDataSource<String> xData = XDDFDataSourcesFactory.fromArray(xDataRanges.toArray(new String[0]));
+
+        // Y Data Source - dynamically adding series for each object
+        List<Map<String, Object>> seriesList = (List<Map<String, Object>>) dataMap.get("series_data");
+
+        XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
+        bottomAxis.setTitle(xAxisTitle != null ? xAxisTitle : "X Axis");
+
+        XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
+        leftAxis.setTitle(yAxisTitle != null ? yAxisTitle : "Y Axis");
+
+        ChartTypes chartType = chartTypes != null ? chartTypes : ChartTypes.LINE;
+        XDDFChartData data = chart.createData(chartType, bottomAxis, leftAxis);
+
+        for(Map<String, Object> seriesData : seriesList){
+
+            if(seriesData.get("series_name") == null || seriesData.get("y_data_ranges") == null){
+                continue;
+            }
+
+            String seriesName = (String) seriesData.get("series_name");
+            List<Double> yDataRanges = (List<Double>) seriesData.get("y_data_ranges");
+
+            if(yDataRanges.isEmpty()){
+                continue;
+            }
+
+            XDDFNumericalDataSource<Double> yData = XDDFDataSourcesFactory.fromArray(yDataRanges.toArray(new Double[0]));
+            XDDFChartData.Series series = data.addSeries(xData, yData);
+            series.setTitle(seriesName, null);
+
+            if(series instanceof XDDFLineChartData.Series lineSeries){
+                if(dataMap.get("line_marker_style") instanceof MarkerStyle){
+                    lineSeries.setMarkerStyle((MarkerStyle) dataMap.get("line_marker_style"));
+                }
+
+                if(dataMap.get("line_marker_size") instanceof Short){
+                    lineSeries.setMarkerSize((Short) dataMap.get("line_marker_size"));
+                }
+
+                if(dataMap.get("line_smooth") instanceof Boolean){
+                    lineSeries.setSmooth((Boolean) dataMap.get("line_smooth"));
+                }
+            }
+
+            if(series instanceof XDDFBarChartData.Series){
+                XDDFBarChartData barChartData = (XDDFBarChartData) data;
+
+                // Set bar direction with default value
+                if(dataMap.get("bar_direction") instanceof BarDirection){
+                    barChartData.setBarDirection((BarDirection) dataMap.get("bar_direction"));
+                }
+
+                // Set bar grouping with default value
+                if(dataMap.get("bar_grouping") instanceof BarGrouping){
+                    barChartData.setBarGrouping((BarGrouping) dataMap.get("bar_grouping"));
+                }
+
+                // Set bar overlap only if present
+                if (dataMap.get("bar_overlap") instanceof Byte) {
+                    barChartData.setOverlap((Byte) dataMap.get("bar_overlap"));
+                }
+
+                // Set gap width only if present
+                if (dataMap.get("gap_width") instanceof Integer) {
+                    barChartData.setGapWidth((Integer) dataMap.get("gap_width"));
+                }
+
+                // Set axis crosses with default value
+                if(dataMap.get("axis_crosses") instanceof AxisCrosses){
+                    leftAxis.setCrosses((AxisCrosses) dataMap.get("axis_crosses"));
+                }
+            }
+        }
+
+        chart.plot(data);
     }
 
 }
