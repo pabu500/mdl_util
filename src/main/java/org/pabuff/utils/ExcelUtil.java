@@ -161,18 +161,22 @@ public class ExcelUtil {
                         }
                     }
 
-                    Font font;
-                    if (xssfFontColor != null) {
-                        font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
-                    } else {
-                        font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                    Font font = null;
+                    if(xssfFontColor != null || fontName != null || fontHeight != null || isBold != null || isItalic != null || fontColor != null) {
+                        if (xssfFontColor != null) {
+                            font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
+                        } else {
+                            font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                        }
                     }
 
-                    CellStyle style;
-                    if (xssfColor != null) {
-                        style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
-                    } else {
-                        style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                    CellStyle style = null;
+                    if(xssfColor != null || color != null || fillPattern != null || wrapText != null || font != null) {
+                        if (xssfColor != null) {
+                            style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
+                        } else {
+                            style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                        }
                     }
 
                     setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
@@ -292,8 +296,6 @@ public class ExcelUtil {
 
     public static void addRows2(Workbook workbook, String sheetName, List<LinkedHashMap<String, Object>> dataRows, Map<String, Object> excelMap) {
 
-        CellStyle style = workbook.createCellStyle();
-        style.setWrapText(true);
         ExcelStyleConfig excelStyleConfig = null;
         List<Map<String, Object>> excelChartList = null;
 
@@ -372,17 +374,22 @@ public class ExcelUtil {
                         }
                     }
 
-                    Font font;
-                    if (xssfFontColor != null) {
-                        font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
-                    } else {
-                        font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                    Font font = null;
+                    if(xssfFontColor != null || fontName != null || fontHeight != null || isBold != null || isItalic != null || fontColor != null) {
+                        if (xssfFontColor != null) {
+                            font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
+                        } else {
+                            font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                        }
                     }
 
-                    if (xssfColor != null) {
-                        style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
-                    } else {
-                        style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                    CellStyle style = null;
+                    if(xssfColor != null || color != null || fillPattern != null || wrapText != null || font != null) {
+                        if (xssfColor != null) {
+                            style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
+                        } else {
+                            style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                        }
                     }
 
                     setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
@@ -756,6 +763,18 @@ public class ExcelUtil {
                 if(dataMap.get("line_smooth") instanceof Boolean){
                     lineSeries.setSmooth((Boolean) dataMap.get("line_smooth"));
                 }
+
+                if(seriesData.get("line_marker_style") instanceof MarkerStyle){
+                    lineSeries.setMarkerStyle((MarkerStyle) seriesData.get("line_marker_style"));
+                }
+
+                if(seriesData.get("line_marker_size") instanceof Short){
+                    lineSeries.setMarkerSize((Short) seriesData.get("line_marker_size"));
+                }
+
+                if(seriesData.get("line_smooth") instanceof Boolean){
+                    lineSeries.setSmooth((Boolean) seriesData.get("line_smooth"));
+                }
             }
 
             if(series instanceof XDDFBarChartData.Series){
@@ -784,6 +803,26 @@ public class ExcelUtil {
                 // Set axis crosses with default value
                 if(dataMap.get("axis_crosses") instanceof AxisCrosses){
                     leftAxis.setCrosses((AxisCrosses) dataMap.get("axis_crosses"));
+                }
+
+                if(seriesData.get("bar_direction") instanceof BarDirection){
+                    barChartData.setBarDirection((BarDirection) seriesData.get("bar_direction"));
+                }
+
+                if(seriesData.get("bar_grouping") instanceof BarGrouping){
+                    barChartData.setBarGrouping((BarGrouping) seriesData.get("bar_grouping"));
+                }
+
+                if (seriesData.get("bar_overlap") instanceof Byte) {
+                    barChartData.setOverlap((Byte) seriesData.get("bar_overlap"));
+                }
+
+                if (seriesData.get("gap_width") instanceof Integer) {
+                    barChartData.setGapWidth((Integer) seriesData.get("gap_width"));
+                }
+
+                if(seriesData.get("axis_crosses") instanceof AxisCrosses){
+                    leftAxis.setCrosses((AxisCrosses) seriesData.get("axis_crosses"));
                 }
             }
         }
