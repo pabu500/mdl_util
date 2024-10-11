@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="99a4c8ef-7cdb-41d4-bce4-d3fa459912bf" name="Changes" comment="refactor addRows, addSheet features">
+    <list default="true" id="99a4c8ef-7cdb-41d4-bce4-d3fa459912bf" name="Changes" comment="version update">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -155,7 +156,15 @@
       <option name="project" value="LOCAL" />
       <updated>1728293428456</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="version update">
+      <option name="closed" value="true" />
+      <created>1728293459544</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1728293459544</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -174,6 +183,7 @@
     <MESSAGE value="add github package" />
     <MESSAGE value="refactor package" />
     <MESSAGE value="refactor addRows, addSheet features" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor addRows, addSheet features" />
+    <MESSAGE value="version update" />
+    <option name="LAST_COMMIT_MESSAGE" value="version update" />
   </component>
 </project>
