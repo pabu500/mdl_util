@@ -221,12 +221,15 @@ public class ExcelUtil {
                 int height = excelChartMap.get("height") != null ? (int) excelChartMap.get("height") : 10;
                 Map<String, Object> chartData = (Map<String, Object>) excelChartMap.get("chart_data");
                 ChartTypes chartType = (ChartTypes) excelChartMap.get("chart_type");
+                String chartPosition = excelChartMap.get("chart_position") != null ? (String) excelChartMap.get("chart_position") : "bottom";
+                boolean overlap = excelChartMap.get("overlap") != null && (boolean) excelChartMap.get("overlap");
+                boolean showLegend = excelChartMap.get("show_legend") == null || (boolean) excelChartMap.get("show_legend");
 
                 if(chartData == null){
                     continue;
                 }
 
-                addChart(workbook, sheetName, chartName, chartTitle, x_axis_title, y_axis_title, chartType, left, top, width, height, chartData);
+                addChart(workbook, sheetName, chartName, chartTitle, x_axis_title, y_axis_title, chartType, chartPosition, overlap, left, top, width, height, showLegend, chartData);
                 i++;
             }
         }
@@ -430,11 +433,14 @@ public class ExcelUtil {
                 int height = excelChartMap.get("height") != null ? (int) excelChartMap.get("height") : 10;
                 Map<String, Object> chartData = (Map<String, Object>) excelChartMap.get("chart_data");
                 ChartTypes chartType = (ChartTypes) excelChartMap.get("chart_type");
+                String chartPosition = excelChartMap.get("chart_position") != null ? (String) excelChartMap.get("chart_position") : "bottom";
+                boolean overlap = excelChartMap.get("overlap") != null && (boolean) excelChartMap.get("overlap");
+                boolean showLegend = excelChartMap.get("show_legend") == null || (boolean) excelChartMap.get("show_legend");
 
                 if(chartData == null){
                     continue;
                 }
-                addChart(workbook, sheetName, chartName, chartTitle, x_axis_title, y_axis_title, chartType, left, top, width, height, chartData);
+                addChart(workbook, sheetName, chartName, chartTitle, x_axis_title, y_axis_title, chartType, chartPosition, overlap, left, top, width, height, showLegend, chartData);
                 i++;
             }
         }
@@ -696,7 +702,7 @@ public class ExcelUtil {
         return font;
     }
 
-    public static void addChart(Workbook workbook, String sheetName, String chartName, String chartTitle, String xAxisTitle, String yAxisTitle, ChartTypes chartTypes, int left, int top, int width, int height, Map<String, Object> dataMap) {
+    public static void addChart(Workbook workbook, String sheetName, String chartName, String chartTitle, String xAxisTitle, String yAxisTitle, ChartTypes chartTypes, String chartPosition, boolean overlap, int left, int top, int width, int height, boolean showLegend, Map<String, Object> dataMap) {
         XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
         XSSFSheet sheet = xssfWorkbook.getSheet(sheetName);
         if(sheet == null) {
@@ -708,16 +714,34 @@ public class ExcelUtil {
         }
 
         int lastRow = sheet.getLastRowNum();
-        int chartRow = lastRow + top;
+        int lastColumn = sheet.getLastRowNum() > 0 ? sheet.getRow(0).getLastCellNum() : 0;
+        int chartRow = 0;
+        int chartColumn = 0;
+
+        if(overlap){
+            chartColumn = left;
+            chartRow = top;
+        }else{
+            if("bottom".equals(chartPosition)){
+                chartRow = lastRow + top + 1;
+                chartColumn = left;
+            }else if("right".equals(chartPosition)){
+                chartColumn = left + lastColumn;
+                chartRow = top;
+            }
+        }
+
         XSSFDrawing  drawing = sheet.createDrawingPatriarch();
-        ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, left, chartRow, left + width, chartRow + height);
+        ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, chartColumn, chartRow, chartColumn + width, chartRow + height);
         XSSFChart chart = drawing.createChart(anchor);
 
         chart.setTitleText(chartTitle);
         chart.setTitleOverlay(false);
 
-        XDDFChartLegend legend = chart.getOrAddLegend();
-        legend.setPosition(LegendPosition.TOP_RIGHT);
+        if(showLegend){
+            XDDFChartLegend legend = chart.getOrAddLegend();
+            legend.setPosition(LegendPosition.TOP_RIGHT);
+        }
 
         List<String> xDataRanges = (List<String>) dataMap.get("x_data_ranges");
         XDDFDataSource<String> xData = XDDFDataSourcesFactory.fromArray(xDataRanges.toArray(new String[0]));
