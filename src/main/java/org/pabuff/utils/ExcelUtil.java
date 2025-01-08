@@ -2,6 +2,9 @@ package org.pabuff.utils;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xddf.usermodel.XDDFFillProperties;
+import org.apache.poi.xddf.usermodel.XDDFLineProperties;
+import org.apache.poi.xddf.usermodel.XDDFShapeProperties;
 import org.apache.poi.xddf.usermodel.chart.*;
 import org.apache.poi.xssf.usermodel.*;
 
@@ -754,6 +757,17 @@ public class ExcelUtil {
 
         XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
         leftAxis.setTitle(yAxisTitle != null ? yAxisTitle : "Y Axis");
+        leftAxis.setCrossBetween(AxisCrossBetween.BETWEEN);
+//        leftAxis.setCrosses(AxisCrosses.AUTO_ZERO);
+
+        // Set axis crosses with default value
+        if(dataMap.get("axis_crosses") instanceof AxisCrosses axisCrosses){
+            leftAxis.setCrosses(axisCrosses);
+        }
+
+        if(dataMap.get("axis_cross_between") instanceof AxisCrossBetween axisCrossBetween){
+            leftAxis.setCrossBetween(axisCrossBetween);
+        }
 
         ChartTypes chartType = chartTypes != null ? chartTypes : ChartTypes.LINE;
         XDDFChartData data = chart.createData(chartType, bottomAxis, leftAxis);
@@ -775,79 +789,121 @@ public class ExcelUtil {
             XDDFChartData.Series series = data.addSeries(xData, yData);
             series.setTitle(seriesName, null);
 
+            if(dataMap.get("fill_properties") instanceof XDDFFillProperties fillProperties){
+                series.setFillProperties(fillProperties);
+            }
+
+            if(dataMap.get("line_properties") instanceof XDDFLineProperties lineProperties){
+                series.setLineProperties(lineProperties);
+            }
+
+           if(dataMap.get("shape_properties") instanceof XDDFShapeProperties shapeProperties){
+               series.setShapeProperties(shapeProperties);
+           }
+
             if(series instanceof XDDFLineChartData.Series lineSeries){
-                if(dataMap.get("line_marker_style") instanceof MarkerStyle){
-                    lineSeries.setMarkerStyle((MarkerStyle) dataMap.get("line_marker_style"));
+                XDDFLineChartData lineChartData = (XDDFLineChartData) data;
+
+                if(seriesData.get("line_marker_style") instanceof MarkerStyle lineMarkerStyle){
+                    lineSeries.setMarkerStyle(lineMarkerStyle);
+                } else if(dataMap.get("line_marker_style") instanceof MarkerStyle lineMarkerStyle){
+                    lineSeries.setMarkerStyle(lineMarkerStyle);
                 }
 
-                if(dataMap.get("line_marker_size") instanceof Short){
-                    lineSeries.setMarkerSize((Short) dataMap.get("line_marker_size"));
+                if(seriesData.get("line_marker_size") instanceof Short lineMarkerSize){
+                    lineSeries.setMarkerSize(lineMarkerSize);
+                }else if(dataMap.get("line_marker_size") instanceof Short lineMarkerSize){
+                    lineSeries.setMarkerSize(lineMarkerSize);
                 }
 
-                if(dataMap.get("line_smooth") instanceof Boolean){
-                    lineSeries.setSmooth((Boolean) dataMap.get("line_smooth"));
+                if(seriesData.get("line_smooth") instanceof Boolean lineSmooth){
+                    lineSeries.setSmooth(lineSmooth);
+                }else if(dataMap.get("line_smooth") instanceof Boolean lineSmooth){
+                    lineSeries.setSmooth(lineSmooth);
+                }
+
+                if(seriesData.get("vary_colors") instanceof Boolean varyColors){
+                    lineChartData.setVaryColors(varyColors);
+                }else if(dataMap.get("vary_colors") instanceof Boolean varyColors){
+                    lineChartData.setVaryColors(varyColors);
                 }
 
                 if(seriesData.get("line_marker_style") instanceof MarkerStyle){
-                    lineSeries.setMarkerStyle((MarkerStyle) seriesData.get("line_marker_style"));
-                }
-
-                if(seriesData.get("line_marker_size") instanceof Short){
-                    lineSeries.setMarkerSize((Short) seriesData.get("line_marker_size"));
-                }
-
-                if(seriesData.get("line_smooth") instanceof Boolean){
-                    lineSeries.setSmooth((Boolean) seriesData.get("line_smooth"));
+                    lineSeries.setMarkerStyle(MarkerStyle.CIRCLE);
                 }
             }
 
-            if(series instanceof XDDFBarChartData.Series){
+            if(series instanceof XDDFBarChartData.Series barSeries){
                 XDDFBarChartData barChartData = (XDDFBarChartData) data;
 
                 // Set bar direction with default value
-                if(dataMap.get("bar_direction") instanceof BarDirection){
-                    barChartData.setBarDirection((BarDirection) dataMap.get("bar_direction"));
+                if(seriesData.get("bar_direction") instanceof BarDirection barDirection){
+                    barChartData.setBarDirection(barDirection);
+                }else if(dataMap.get("bar_direction") instanceof BarDirection barDirection){
+                    barChartData.setBarDirection(barDirection);
                 }
 
                 // Set bar grouping with default value
-                if(dataMap.get("bar_grouping") instanceof BarGrouping){
-                    barChartData.setBarGrouping((BarGrouping) dataMap.get("bar_grouping"));
+                if(seriesData.get("bar_grouping") instanceof BarGrouping barGrouping){
+                    barChartData.setBarGrouping(barGrouping);
+                }else if(dataMap.get("bar_grouping") instanceof BarGrouping barGrouping){
+                    barChartData.setBarGrouping(barGrouping);
                 }
 
                 // Set bar overlap only if present
-                if (dataMap.get("bar_overlap") instanceof Byte) {
-                    barChartData.setOverlap((Byte) dataMap.get("bar_overlap"));
+                if (seriesData.get("bar_overlap") instanceof Byte barOverlap) {
+                    barChartData.setOverlap(barOverlap);
+                }else if (dataMap.get("bar_overlap") instanceof Byte barOverlap) {
+                    barChartData.setOverlap(barOverlap);
                 }
 
                 // Set gap width only if present
-                if (dataMap.get("gap_width") instanceof Integer) {
-                    barChartData.setGapWidth((Integer) dataMap.get("gap_width"));
+                if (seriesData.get("gap_width") instanceof Integer gapWidth) {
+                    barChartData.setGapWidth(gapWidth);
+                }else if (dataMap.get("gap_width") instanceof Integer gapWidth) {
+                    barChartData.setGapWidth(gapWidth);
                 }
 
-                // Set axis crosses with default value
-                if(dataMap.get("axis_crosses") instanceof AxisCrosses){
-                    leftAxis.setCrosses((AxisCrosses) dataMap.get("axis_crosses"));
+                if(seriesData.get("vary_colors") instanceof Boolean varyColors){
+                    barChartData.setVaryColors(varyColors);
+                }else if(dataMap.get("vary_colors") instanceof Boolean varyColors){
+                    barChartData.setVaryColors(varyColors);
                 }
 
-                if(seriesData.get("bar_direction") instanceof BarDirection){
-                    barChartData.setBarDirection((BarDirection) seriesData.get("bar_direction"));
+                if(seriesData.get("error_bars") instanceof XDDFErrorBars errorBars){
+                    barSeries.setErrorBars(errorBars);
+                }else if(dataMap.get("error_bars") instanceof XDDFErrorBars errorBars){
+                    barSeries.setErrorBars(errorBars);
                 }
 
-                if(seriesData.get("bar_grouping") instanceof BarGrouping){
-                    barChartData.setBarGrouping((BarGrouping) seriesData.get("bar_grouping"));
+                if(seriesData.get("invert_if_negative") instanceof Boolean invertIfNegative){
+                    barSeries.setInvertIfNegative(invertIfNegative);
+                }else if(dataMap.get("invert_if_negative") instanceof Boolean invertIfNegative){
+                    barSeries.setInvertIfNegative(invertIfNegative);
+                }
+            }
+
+            if(series instanceof XDDFPieChartData.Series pieSeries){
+                XDDFPieChartData pieChartData = (XDDFPieChartData) data;
+
+                if(seriesData.get("vary_colors") instanceof Boolean varyColors){
+                    pieChartData.setVaryColors(varyColors);
+                }else if(dataMap.get("vary_colors") instanceof Boolean varyColors){
+                    pieChartData.setVaryColors(varyColors);
                 }
 
-                if (seriesData.get("bar_overlap") instanceof Byte) {
-                    barChartData.setOverlap((Byte) seriesData.get("bar_overlap"));
+                if(seriesData.get("first_slice_angle") instanceof Integer firstSliceAngle){
+                    pieChartData.setFirstSliceAngle(firstSliceAngle);
+                }else if(dataMap.get("first_slice_angle") instanceof Integer firstSliceAngle){
+                    pieChartData.setFirstSliceAngle(firstSliceAngle);
                 }
 
-                if (seriesData.get("gap_width") instanceof Integer) {
-                    barChartData.setGapWidth((Integer) seriesData.get("gap_width"));
+                if(seriesData.get("explosion") instanceof Long explosion){
+                    pieSeries.setExplosion(explosion);
+                }else if(dataMap.get("explosion") instanceof Long explosion){
+                    pieSeries.setExplosion(explosion);
                 }
 
-                if(seriesData.get("axis_crosses") instanceof AxisCrosses){
-                    leftAxis.setCrosses((AxisCrosses) seriesData.get("axis_crosses"));
-                }
             }
         }
 
