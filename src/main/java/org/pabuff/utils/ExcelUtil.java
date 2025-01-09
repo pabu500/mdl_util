@@ -2,9 +2,7 @@ package org.pabuff.utils;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xddf.usermodel.XDDFFillProperties;
-import org.apache.poi.xddf.usermodel.XDDFLineProperties;
-import org.apache.poi.xddf.usermodel.XDDFShapeProperties;
+import org.apache.poi.xddf.usermodel.*;
 import org.apache.poi.xddf.usermodel.chart.*;
 import org.apache.poi.xssf.usermodel.*;
 
@@ -868,6 +866,14 @@ public class ExcelUtil {
                     barChartData.setVaryColors(varyColors);
                 }else if(dataMap.get("vary_colors") instanceof Boolean varyColors){
                     barChartData.setVaryColors(varyColors);
+                }
+
+                if (seriesData.get("bar_color") instanceof XDDFColor barColor) {
+                    XDDFSolidFillProperties fillProperties = new XDDFSolidFillProperties(barColor);
+                    barSeries.setFillProperties(fillProperties);
+                } else if (dataMap.get("bar_color") instanceof XDDFColor barColor) {
+                    XDDFSolidFillProperties fillProperties = new XDDFSolidFillProperties(barColor);
+                    barSeries.setFillProperties(fillProperties);
                 }
 
                 if(seriesData.get("error_bars") instanceof XDDFErrorBars errorBars){
