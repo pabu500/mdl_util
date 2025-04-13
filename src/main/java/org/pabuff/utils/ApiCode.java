@@ -7,4 +7,5 @@ public enum ApiCode {
     ACL_UNAUTHORIZED,
 
     RESULT_GENERIC_ERROR,
+    RESULT_NOT_FOUND,
 }
