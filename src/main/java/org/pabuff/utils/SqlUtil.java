@@ -3,6 +3,8 @@ package org.pabuff.utils;
 import java.util.Map;
 
 public class SqlUtil {
+
+    @Deprecated
     public static Map<String, String> makeSelectSql(Map<String, Object> sqlMap) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
