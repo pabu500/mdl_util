@@ -8,4 +8,5 @@ public enum ApiCode {
 
     RESULT_GENERIC_ERROR,
     RESULT_NOT_FOUND,
+    RESULT_TIMEOUT,
 }
