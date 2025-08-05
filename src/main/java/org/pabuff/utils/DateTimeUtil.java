@@ -179,9 +179,10 @@ public class DateTimeUtil {
     }
 
     public static int getDaysInMonth(LocalDateTime dateTime) {
-        int year = dateTime.getYear();
-        boolean isLeapYear = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-        return dateTime.getMonth().length(isLeapYear);
+//        int year = dateTime.getYear();
+//        boolean isLeapYear = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+//        return dateTime.getMonth().length(isLeapYear);
+        return dateTime.getMonth().length(dateTime.toLocalDate().isLeapYear());
     }
 
     public static LocalDateTime alignToDayStart(LocalDateTime dateTime) {
@@ -220,5 +221,19 @@ public class DateTimeUtil {
             return null;
         }
         return alignToDayEnd(dateTime).format(formatter);
+    }
+
+    // Convert "20250602" to "2025-06-02T00:00:00"
+    public static String getTimeStampFromDateStr(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) {
+            return null;
+        }
+        // Convert "20250602" to "2025-06-02T00:00:00"
+        if (!dateStr.matches("\\d{8}")) {
+            return null; // Invalid format
+        }
+        return dateStr.substring(0, 4) + "-"
+                + dateStr.substring(4, 6) + "-"
+                + dateStr.substring(6, 8) + "T00:00:00";
     }
 }
