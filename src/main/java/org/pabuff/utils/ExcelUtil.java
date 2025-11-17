@@ -79,6 +79,11 @@ public class ExcelUtil {
             headerStyle.setFont(headerFont);
         }
 
+        // cap sheet name to 31 characters
+        if(sheetName.length() > 31){
+            sheetName = sheetName.substring(0,31);
+        }
+
         Sheet sheet = workbook.createSheet(sheetName);
         int rowCount = 0;
         Row headerRow = sheet.createRow(rowCount++);
