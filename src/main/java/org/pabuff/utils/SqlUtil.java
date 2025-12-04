@@ -815,7 +815,10 @@ public class SqlUtil {
             if(content.get(key) instanceof Integer || content.get(key) instanceof Double) {
                 sql.append(" ").append(content.get(key)).append(",");
             } else {
-                sql.append(" '").append(content.get(key)).append("',");
+                // replace ' with '' to prevent SQL syntax error
+                String value = content.get(key).toString().replace("'", "''");
+                sql.append(" '").append(value).append("',");
+//                sql.append(" '").append(content.get(key)).append("',");
             }
             //sql.append(" '").append(content.get(key)).append("',");
         }
