@@ -10,4 +10,6 @@ public enum ApiCode {
     RESULT_DATABASE_ERROR,
     RESULT_NOT_FOUND,
     RESULT_TIMEOUT,
+
+    BL_GENERIC_ERROR, // business logic generic error
 }
