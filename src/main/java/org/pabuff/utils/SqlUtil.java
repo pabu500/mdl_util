@@ -847,6 +847,7 @@ public class SqlUtil {
                 }
             }
         }
+
         //disable wildcard update for data security
         if(targetConstraint.toString().isEmpty()){
             return Map.of("error", "Missing target constraint");
@@ -878,7 +879,8 @@ public class SqlUtil {
                 if((content.get(key)+"").isEmpty()) {
                     sql.append(" ").append(key).append(" = null,");
                 }else {
-                    sql.append(" ").append(key).append(" = '").append(content.get(key)).append("',");
+                    String value = content.get(key).toString().replace("'", "''");
+                    sql.append(" ").append(key).append(" = '").append(value).append("',");
                 }
             }
         }
