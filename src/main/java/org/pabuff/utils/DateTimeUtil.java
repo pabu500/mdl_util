@@ -228,12 +228,24 @@ public class DateTimeUtil {
         if (dateStr == null || dateStr.isEmpty()) {
             return null;
         }
-        // Convert "20250602" to "2025-06-02T00:00:00"
-        if (!dateStr.matches("\\d{8}")) {
-            return null; // Invalid format
+
+        // Already ISO format
+        if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}")) {
+            return dateStr;
         }
-        return dateStr.substring(0, 4) + "-"
-                + dateStr.substring(4, 6) + "-"
-                + dateStr.substring(6, 8) + "T00:00:00";
+
+        // Handle "YYYY-MM-DD HH:mm:ss"
+        if (dateStr.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")) {
+            return dateStr.replace(" ", "T");
+        }
+
+        // Handle "YYYYMMDD"
+        if (dateStr.matches("\\d{8}")) {
+            return dateStr.substring(0, 4) + "-"
+                    + dateStr.substring(4, 6) + "-"
+                    + dateStr.substring(6, 8) + "T00:00:00";
+        }
+
+        return null;
     }
 }
