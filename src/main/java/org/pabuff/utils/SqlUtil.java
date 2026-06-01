@@ -290,7 +290,7 @@ public class SqlUtil {
             targetConstraint.append(" AND ").append(sqlMap.get("like_target_key")).append(" ilike '%").append(sqlMap.get("like_target_value")).append("%'");
 
 //            isConstraintPresent = true;
-        }else{
+        } else {
             //multiple target
             if(sqlMap.get("like_targets") != null){
                 if(sqlMap.get("like_targets") instanceof Map<?,?>){
