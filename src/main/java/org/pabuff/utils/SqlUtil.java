@@ -832,6 +832,12 @@ public class SqlUtil {
     }
 
     public static Map<String, String> makeUpdateSql(Map<String, Object> sqlMap){
+
+        Map<String, Object> content = (Map<String, Object>) sqlMap.get("content");
+        if(content == null || content.isEmpty()) {
+            return Map.of("error", "Missing content for update");
+        }
+
         StringBuilder targetConstraint = new StringBuilder();
         if(sqlMap.get("target_key") != null) {
             targetConstraint = new StringBuilder(sqlMap.get("target_key") + " = '" + sqlMap.get("target_value") + "'");
@@ -865,11 +871,6 @@ public class SqlUtil {
             sql.append(sqlMap.get("table"));
         } else {
             return Map.of("error", "Missing table name");
-        }
-
-        Map<String, Object> content = (Map<String, Object>) sqlMap.get("content");
-        if(content == null) {
-            return Map.of("error", "Missing content");
         }
 
         sql.append(" SET ");
