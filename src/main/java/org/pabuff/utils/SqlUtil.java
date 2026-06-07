@@ -847,6 +847,10 @@ public class SqlUtil {
                         targetConstraint = new StringBuilder(targetConstraint.substring(0, targetConstraint.length() - 5));
                     }
                 }
+                // add bracket for multiple target to avoid operator precedence issue
+                if(targetConstraint.toString().contains(" AND ")){
+                    targetConstraint = new StringBuilder(" ( " + targetConstraint.toString() + " ) ");
+                }
             }
         }
 
