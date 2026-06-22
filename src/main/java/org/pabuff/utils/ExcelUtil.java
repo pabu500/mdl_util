@@ -1,7 +1,6 @@
 package org.pabuff.utils;
 
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xddf.usermodel.*;
 import org.apache.poi.xddf.usermodel.chart.*;
 import org.apache.poi.xssf.usermodel.*;
@@ -11,6 +10,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static java.lang.Integer.parseInt;
 
 //@Service
 public class ExcelUtil {
@@ -207,6 +208,212 @@ public class ExcelUtil {
                     cell.setCellValue((LocalDateTime) entry.getValue());
                 }
             }
+        }
+
+        if(excelChartList != null){
+            int i = 1;
+            for(Map<String, Object> excelChartMap : excelChartList){
+
+                if(excelChartMap.get("chart_data") == null){
+                    continue;
+                }
+
+                String chartName = "Chart" + i;
+                String chartTitle = excelChartMap.get("chart_title") != null ? (String) excelChartMap.get("chart_title") : chartName;
+                String x_axis_title = excelChartMap.get("x_axis_title") != null ? (String) excelChartMap.get("x_axis_title") : "X-Axis";
+                String y_axis_title = excelChartMap.get("y_axis_title") != null ? (String) excelChartMap.get("y_axis_title") : "Y-Axis";
+                int left = excelChartMap.get("left") != null ? (int) excelChartMap.get("left") : 0;
+                int top = excelChartMap.get("top") != null ? (int) excelChartMap.get("top") : 0;
+                int width = excelChartMap.get("width") != null ? (int) excelChartMap.get("width") : 5;
+                int height = excelChartMap.get("height") != null ? (int) excelChartMap.get("height") : 10;
+                Map<String, Object> chartData = (Map<String, Object>) excelChartMap.get("chart_data");
+                ChartTypes chartType = (ChartTypes) excelChartMap.get("chart_type");
+                String chartPosition = excelChartMap.get("chart_position") != null ? (String) excelChartMap.get("chart_position") : "bottom";
+                boolean overlap = excelChartMap.get("overlap") != null && (boolean) excelChartMap.get("overlap");
+                boolean showLegend = excelChartMap.get("show_legend") == null || (boolean) excelChartMap.get("show_legend");
+
+                if(chartData == null){
+                    continue;
+                }
+
+                addChart(workbook, sheetName, chartName, chartTitle, x_axis_title, y_axis_title, chartType, chartPosition, overlap, left, top, width, height, showLegend, chartData);
+                i++;
+            }
+        }
+    }
+
+    public static void addSheet3(Workbook workbook,
+                                 String sheetName,
+                                 LinkedHashMap<String, Integer> bodyHeader,
+                                 List<LinkedHashMap<String, Object>> bodyDataRows,
+                                 CellStyle bodyHeaderStyle, XSSFFont bodyHeaderFont,
+                                 Map<String, Object> excelMap) {
+        if(bodyHeaderStyle == null) {
+            bodyHeaderStyle = workbook.createCellStyle();
+            bodyHeaderStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+            bodyHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            bodyHeaderStyle.setWrapText(true);
+        }
+
+        XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
+
+        if(bodyHeaderFont == null) {
+            bodyHeaderFont = xssfWorkbook.createFont();
+            bodyHeaderFont.setFontName("Arial");
+            bodyHeaderFont.setFontHeightInPoints((short) 13);
+            bodyHeaderFont.setBold(true);
+            bodyHeaderStyle.setFont(bodyHeaderFont);
+        }
+
+        // cap sheet name to 31 characters
+        if(sheetName.length() > 31){
+            sheetName = sheetName.substring(0,31);
+        }
+
+        Sheet sheet = workbook.createSheet(sheetName);
+        int rowCount = 0;
+
+        Map<String, Object> styleMap = null;
+        Map<String, Object> headerMap = null;
+        Map<String, Object> summaryMap = null;
+
+        if(excelMap != null){
+            styleMap = (Map<String, Object>) excelMap.get("excel_styles");
+            headerMap = (Map<String, Object>)  excelMap.get("excel_header");
+            summaryMap = (Map<String, Object>) excelMap.get("excel_summary");
+        }
+
+        // Add excel header
+        if (headerMap != null) {
+            rowCount = renderExcelPart(sheet, workbook, headerMap, styleMap, rowCount);
+        }
+
+        Row bodyHeaderRow = getOrCreateRow(sheet, rowCount++);
+        int columnCount = 0;
+        for (Map.Entry<String, Integer> entry : bodyHeader.entrySet()) {
+            Cell cell = bodyHeaderRow.createCell(columnCount);
+            cell.setCellValue(entry.getKey());
+            cell.setCellStyle(bodyHeaderStyle);
+            sheet.setColumnWidth(columnCount, entry.getValue());
+            columnCount++;
+        }
+
+        ExcelStyleConfig excelStyleConfig = null;
+        List<Map<String, Object>> excelChartList = null;
+        if(excelMap != null && !excelMap.isEmpty()) {
+            if (excelMap.get("excel_chart") != null) {
+                excelChartList = (List<Map<String, Object>>) excelMap.get("excel_chart");
+                excelMap.remove("excel_chart");
+            }
+            excelStyleConfig = new ExcelStyleConfig(excelMap);
+        }
+
+        for (Map<String, Object> row : bodyDataRows) {
+            Row dataRow = sheet.createRow(rowCount++);
+            columnCount = 0;
+            for (Map.Entry<String, Object> entry : row.entrySet()) {
+
+                if(excelStyleConfig != null){
+                    if(excelStyleConfig.containsAnySuffix(entry.getKey())){
+                        continue;
+                    }
+                }
+
+                Cell cell = dataRow.createCell(columnCount++);
+
+                if(excelStyleConfig != null){
+                    Short color = null;
+                    XSSFColor xssfColor = null;
+                    FillPatternType fillPattern = null;
+                    Boolean wrapText = null;
+                    String fontName = null;
+                    Short fontHeight = null;
+                    Boolean isBold = null;
+                    Short fontColor = null;
+                    XSSFColor xssfFontColor = null;
+                    Boolean isItalic = null;
+
+                    if(excelStyleConfig.getCellColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellColorSuffix())) {
+                        if( row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix()) instanceof XSSFColor){
+                            xssfColor = (XSSFColor) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+                        }
+                        else{
+                            color = (Short) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+                        }
+                    }
+                    if(excelStyleConfig.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix())) {
+                        fillPattern = (FillPatternType) row.get(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix());
+                    }
+                    if (excelStyleConfig.getCellWrapTextSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellWrapTextSuffix())) {
+                        wrapText = (Boolean) row.get(entry.getKey() + excelStyleConfig.getCellWrapTextSuffix());
+                    }
+
+                    if(excelStyleConfig.getFontNameSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontNameSuffix())) {
+                        fontName = (String) row.get(entry.getKey() + excelStyleConfig.getFontNameSuffix());
+                    }
+                    if(excelStyleConfig.getFontHeightInPointsSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontHeightInPointsSuffix())) {
+                        fontHeight = (Short) row.get(entry.getKey() + excelStyleConfig.getFontHeightInPointsSuffix());
+                    }
+                    if(excelStyleConfig.getFontBoldSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontBoldSuffix())) {
+                        isBold = (Boolean) row.get(entry.getKey() + excelStyleConfig.getFontBoldSuffix());
+                    }
+                    if(excelStyleConfig.getFontItalicSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontItalicSuffix())) {
+                        isItalic = (Boolean) row.get(entry.getKey() + excelStyleConfig.getFontItalicSuffix());
+                    }
+                    if(excelStyleConfig.getFontColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontColorSuffix())) {
+                        if( row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix()) instanceof XSSFColor){
+                            xssfFontColor = (XSSFColor) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+                        }
+                        else{
+                            fontColor = (Short) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+                        }
+                    }
+
+                    Font font = null;
+                    if(xssfFontColor != null || fontName != null || fontHeight != null || isBold != null || isItalic != null || fontColor != null) {
+                        if (xssfFontColor != null) {
+                            font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
+                        } else {
+                            font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                        }
+                    }
+
+                    CellStyle style = null;
+                    if(xssfColor != null || color != null || fillPattern != null || wrapText != null || font != null) {
+                        if (xssfColor != null) {
+                            style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
+                        } else {
+                            style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                        }
+                    }
+
+                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+                    continue;
+                }
+
+                if (entry.getValue() instanceof String) {
+                    cell.setCellValue((String) entry.getValue());
+                } else if (entry.getValue() instanceof Integer) {
+                    cell.setCellValue((Integer) entry.getValue());
+                } else if (entry.getValue() instanceof Long) {
+                    cell.setCellValue((Long) entry.getValue());
+                } else if (entry.getValue() instanceof Double) {
+                    cell.setCellValue((Double) entry.getValue());
+                } else if (entry.getValue() instanceof Float) {
+                    cell.setCellValue((Float) entry.getValue());
+                } else if (entry.getValue() instanceof Boolean) {
+                    cell.setCellValue((Boolean) entry.getValue());
+                } else if (entry.getValue() instanceof Date) {
+                    cell.setCellValue((Date) entry.getValue());
+                } else if (entry.getValue() instanceof LocalDateTime) {
+                    cell.setCellValue((LocalDateTime) entry.getValue());
+                }
+            }
+        }
+
+        // Summary part
+        if(summaryMap != null){
+            rowCount = renderExcelPart(sheet, workbook, summaryMap, styleMap, rowCount);
         }
 
         if(excelChartList != null){
@@ -533,7 +740,7 @@ public class ExcelUtil {
             String celName = (String) entry.get("cell");
             //turn "A1" to "1" and 1
             int col = celName.charAt(0) - 'A';
-            int row = Integer.parseInt(celName.substring(1)) - 1;
+            int row = parseInt(celName.substring(1)) - 1;
             Object value = entry.get("value");
             Double width = null;
             if(entry.get("width") != null){
@@ -655,6 +862,45 @@ public class ExcelUtil {
         }
         if(font != null) {
             style.setFont(font);
+        }
+
+        return style;
+    }
+
+    public static CellStyle addCellStyle3(Workbook workbook, String sheetName, Short color, FillPatternType fillPatternType, Boolean setWrapText, Font font, Map<String, BorderStyle> border) {
+
+        CellStyle style = workbook.createCellStyle();
+
+        if(color != null) {
+            style.setFillForegroundColor(color);
+            style.setFillPattern(Objects.requireNonNullElse(fillPatternType, FillPatternType.SOLID_FOREGROUND));
+        }
+        if(setWrapText != null && setWrapText) {
+            style.setWrapText(true);
+        }
+        if(font != null) {
+            style.setFont(font);
+        }
+        if(border != null) {
+            if(border.get("all") != null){
+                style.setBorderTop(border.get("all"));
+                style.setBorderBottom(border.get("all"));
+                style.setBorderLeft(border.get("all"));
+                style.setBorderRight(border.get("all"));
+            }else{
+                if(border.get("top") != null){
+                    style.setBorderTop(border.get("top"));
+                }
+                if(border.get("bottom") != null){
+                    style.setBorderBottom(border.get("bottom"));
+                }
+                if(border.get("left") != null){
+                    style.setBorderLeft(border.get("left"));
+                }
+                if(border.get("right") != null){
+                    style.setBorderRight(border.get("right"));
+                }
+            }
         }
 
         return style;
@@ -921,4 +1167,207 @@ public class ExcelUtil {
         chart.plot(data);
     }
 
+    @SuppressWarnings("unchecked")
+    public static int renderExcelPart(
+            Sheet sheet,
+            Workbook workbook,
+            Map<String, Object> map,
+            Map<String, Object> excelStyles,
+            int rowCount
+    ) {
+
+        if (sheet == null || workbook == null || map == null) {
+            return rowCount;
+        }
+
+        if (excelStyles == null) {
+            excelStyles = new HashMap<>();
+        }
+
+        // Cache to store style used
+        Map<String, CellStyle> styleCache = new HashMap<>();
+
+        // Render main title
+        Object titleObj = map.get("title");
+        if (titleObj instanceof Map<?, ?> titleMapRaw) {
+            Map<String, Object> titleMap = (Map<String, Object>) titleMapRaw;
+
+            String titleText = (String) titleMap.get("text");
+            String strStyle = (String) titleMap.get("style");
+            if (titleText != null && !titleText.isEmpty()) {
+                Row titleRow = getOrCreateRow(sheet, rowCount++);
+                Cell cell = titleRow.createCell(0);
+                cell.setCellValue(titleText);
+
+                CellStyle titleStyle = getOrCreateStyle(styleCache, excelStyles, strStyle, sheet);
+                if (titleStyle != null) {
+                    cell.setCellStyle(titleStyle);
+                }
+
+                sheet.setColumnWidth(0, 10000);
+            }
+        }
+
+        Object sectionsObj = map.get("sections");
+        if (!(sectionsObj instanceof LinkedList<?> sections)) {
+            return rowCount;
+        }
+
+        for (Object sectionObj : sections) {
+            if (!(sectionObj instanceof Map<?, ?> sectionRaw)) {
+                continue;
+            }
+
+            Map<String, Object> section = (Map<String, Object>) sectionRaw;
+            rowCount = renderExcelSection(sheet, section, rowCount, excelStyles, styleCache);
+        }
+        return rowCount;
+    }
+
+    public static int renderKeyValueSection(Sheet sheet, Map<String, Object> section, int rowCount,
+                                            Map<String, Object> styles, Map<String, CellStyle> styleCache) {
+        Object dataObj = section.get("data");
+        if (!(dataObj instanceof LinkedHashMap<?, ?> dataRaw)) {
+            return rowCount;
+        }
+
+        String keyStyleName = (String) section.get("key_style");
+        String valueStyleName = (String) section.get("value_style");
+
+        CellStyle keyStyle = getOrCreateStyle(styleCache, styles, keyStyleName, sheet);
+        CellStyle valueStyle = getOrCreateStyle(styleCache, styles, valueStyleName, sheet);
+
+        LinkedHashMap<String, Object> data = (LinkedHashMap<String, Object>) dataRaw;
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            String key = entry.getKey();
+            String value = (String) entry.getValue();
+
+            if(value == null){
+                rowCount++;
+                continue;
+            }
+
+            Row row = getOrCreateRow(sheet, rowCount++);
+            Cell keyCell = row.createCell(0);
+            keyCell.setCellValue(key);
+            if (keyStyle != null) {
+                keyCell.setCellStyle(keyStyle);
+            }
+
+            Cell valueCell = row.createCell(1);
+            valueCell.setCellValue(value);
+            if (valueStyle != null) {
+                valueCell.setCellStyle(valueStyle);
+            }
+        }
+        return rowCount;
+    }
+
+    // Summary section rendering method
+    @SuppressWarnings("unchecked")
+    public static int renderSummarySection(Sheet sheet,
+                                           Map<String, Object> section,
+                                           int rowCount,
+                                           Map<String, Object> styles,
+                                           Map<String, CellStyle> styleCache) {
+        Object dataObj = section.get("data");
+        if (!(dataObj instanceof LinkedHashMap<?,  ?> dataRaw)) {
+            return rowCount;
+        }
+
+        LinkedHashMap<String, Object> data = (LinkedHashMap<String, Object>) dataRaw;
+
+        Map<String, Object> stylesByColumn = new HashMap<>();
+        Object stylesByColumnObj = section.get("styles_by_column");
+        if (stylesByColumnObj instanceof Map<?, ?> rawStyleMap) {
+            stylesByColumn = (Map<String, Object>) rawStyleMap;
+        }
+
+        // All Summary data implemented within 1 row
+        Row row = getOrCreateRow(sheet, rowCount++);
+
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            int columnIndex = Integer.parseInt(entry.getKey());
+            if (columnIndex < 0) {
+                continue;
+            }
+
+            Cell cell = row.createCell(columnIndex);
+            cell.setCellValue((String) entry.getValue());
+
+            String styleName = (String) stylesByColumn.get(entry.getKey());
+            CellStyle cellStyle = getOrCreateStyle(styleCache, styles, styleName, sheet);
+
+            if (cellStyle != null) {
+                cell.setCellStyle(cellStyle);
+            }
+        }
+
+        return rowCount;
+    }
+
+    public static int renderExcelSection(Sheet sheet, Map<String, Object> section, int rowCount, Map<String, Object> styles,
+                                         Map<String, CellStyle> styleCache) {
+        String type = section.get("type") != null ? section.get("type").toString() : "";
+        return switch (type) {
+            case "key_value" -> renderKeyValueSection(sheet, section, rowCount, styles, styleCache);
+            case "blank" -> rowCount + 1;
+            case "summary" -> renderSummarySection(sheet, section, rowCount, styles, styleCache);
+            default -> rowCount;
+        };
+    }
+
+    public static CellStyle createCellStyleFromMap(Map<String, Object> style, Sheet sheet) {
+        Workbook workbook = sheet.getWorkbook();
+
+        Short color = (Short) style.get("cell_color");
+        FillPatternType fillPattern = (FillPatternType) style.get("cell_fill_pattern");
+        Boolean wrapText = (Boolean) style.get("cell_wrap_text");
+
+        String fontName = (String) style.getOrDefault("font_name", null);
+        Short fontHeight = (Short) style.get("font_height");
+        Boolean isBold = (Boolean) style.get("font_bold");
+        Short fontColor = (Short) style.get("font_color");
+        Boolean isItalic = (Boolean) style.get("font_italic");
+
+        Map<String, BorderStyle> borderStyleMap = (Map<String, BorderStyle>) style.get("border_style");
+
+        Font font = addFontStyle(workbook, fontName, fontColor,
+                fontHeight, isBold, isItalic);
+
+        return addCellStyle3(workbook, sheet.getSheetName(), color,
+                fillPattern, wrapText, font, borderStyleMap);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static CellStyle getOrCreateStyle(
+            Map<String, CellStyle> styleCache,
+            Map<String, Object> styles,
+            String styleName,
+            Sheet sheet
+    ) {
+        if (styleName == null || styleName.isBlank()) {
+            return null;
+        }
+
+        if (styleCache.containsKey(styleName)) {
+            return styleCache.get(styleName);
+        }
+
+        Object styleObj = styles.get(styleName);
+        if (!(styleObj instanceof Map<?, ?> styleRaw)) {
+            return null;
+        }
+
+        Map<String, Object> styleMap = (Map<String, Object>) styleRaw;
+        CellStyle cellStyle = createCellStyleFromMap(styleMap, sheet);
+
+        styleCache.put(styleName, cellStyle);
+        return cellStyle;
+    }
+
+    private static Row getOrCreateRow(Sheet sheet, int rowIndex) {
+        Row row = sheet.getRow(rowIndex);
+        return row != null ? row : sheet.createRow(rowIndex);
+    }
 }
