@@ -43,21 +43,24 @@ public class DateTimeUtil {
     public static DateTimeFormatter formatterIso8601 = DateTimeFormatter.ISO_DATE_TIME;
     public static DateTimeFormatter formatterMs6WithZone = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs6WithZone);
 
-    public static LocalDateTime getLocalDateTime(String dateTimeStr) {
+    public static LocalDateTime getLocalDateTime(String strTimestamp) {
+        if(strTimestamp == null || strTimestamp.isEmpty()) {
+            return null;
+        }
         try {
-            return LocalDateTime.parse(dateTimeStr, formatter);
+            return LocalDateTime.parse(strTimestamp, formatter);
         }catch (Exception e) {
             try {
-                return LocalDateTime.parse(dateTimeStr, formatterMs);
+                return LocalDateTime.parse(strTimestamp, formatterMs);
             } catch (Exception e1) {
                 try {
-                    return LocalDateTime.parse(dateTimeStr, formatterMs6);
+                    return LocalDateTime.parse(strTimestamp, formatterMs6);
                 } catch (Exception e2) {
                     try {
-                        return LocalDateTime.parse(dateTimeStr, formatterIso8601);
+                        return LocalDateTime.parse(strTimestamp, formatterIso8601);
                     } catch (Exception e4) {
                         try {
-                            return OffsetDateTime.parse(dateTimeStr, formatterMs6WithZone).toLocalDateTime();
+                            return OffsetDateTime.parse(strTimestamp, formatterMs6WithZone).toLocalDateTime();
                         } catch (Exception e5) {
                             return null;
                         }
