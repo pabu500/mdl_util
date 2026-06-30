@@ -1,597 +1,709 @@
 package org.pabuff.utils;
 
-import com.itextpdf.io.font.constants.StandardFonts;
-import com.itextpdf.kernel.colors.Color;
-import com.itextpdf.kernel.colors.DeviceRgb;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.geom.PageSize;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.borders.Border;
-import com.itextpdf.layout.borders.SolidBorder;
-import com.itextpdf.layout.element.AreaBreak;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.AreaBreakType;
-import com.itextpdf.layout.properties.Property;
-import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
-import org.apache.poi.hssf.util.HSSFColor;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.openpdf.text.*;
+import org.openpdf.text.pdf.*;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.awt.Color;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.List;
 
 public class PdfUtil {
-//    public static void convertExcelToPdf(File excelFile, File outputDir) {
-//        try {
-//            Files.createDirectories(outputDir.toPath());
-//
-//            ProcessBuilder processBuilder = new ProcessBuilder(
-//                    "libreoffice",
-//                    "--headless",
-//                    "--convert-to",
-//                    "pdf",
-//                    "--outdir",
-//                    outputDir.getAbsolutePath(),
-//                    excelFile.getAbsolutePath()
-//            );
-//            processBuilder.redirectErrorStream(true);
-//            Process process = processBuilder.start();
-//            boolean finished = process.waitFor(60, TimeUnit.SECONDS);
-//            if (!finished) {
-//                process.destroyForcibly();
-//                throw new RuntimeException("LibreOffice PDF conversion timeout");
-//            }
-//
-//            int exitCode = process.exitValue();
-//            if (exitCode != 0) {
-//                throw new RuntimeException("LibreOffice PDF conversion failed. Exit code: " + exitCode);
-//            }
-//
-//        } catch (IOException e) {
-//            throw new RuntimeException("Failed to run LibreOffice PDF conversion", e);
-//        } catch (InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//            throw new RuntimeException("PDF conversion interrupted", e);
-//        }
-//    }
-//
-//    public static File getExpectedPdfFile(File excelFile, File outputDir) {
-//        String excelName = excelFile.getName();
-//        String pdfName = excelName.replaceFirst("(?i)\\.xlsx$", ".pdf")
-//                .replaceFirst("(?i)\\.xls$", ".pdf");
-//
-//        File pdfFile = new File(outputDir, pdfName);
-//        if (!pdfFile.exists()) {
-//            throw new RuntimeException("PDF file was not created: " + pdfFile.getAbsolutePath());
-//        }
-//        return pdfFile;
-//    }
-//
-//    public static File getOutputDir(File excelFile, Map<String, Object> request) {
-//        String outputDir = (String)  request.get("output_dir");
-//        if (outputDir != null && !outputDir.isBlank()) {
-//            return new File(outputDir);
-//        }
-//        return excelFile.getParentFile();
-//    }
 
-    public static Map<String, Object> convertExcelToPdf(
-            File excelFile,
-            File outputDir,
-            Map<String, Object> request) {
-
-        if (excelFile == null || !excelFile.exists() || !excelFile.isFile()) {
-            throw new RuntimeException("Excel file not found: " + excelFile);
-        }
-
-        if (outputDir == null) {
-            outputDir = excelFile.getParentFile();
-        }
-
-        if (!outputDir.exists() && !outputDir.mkdirs()) {
-            throw new RuntimeException("Failed to create output directory: " + outputDir.getAbsolutePath());
-        }
-
-        if (request == null) {
-            request = new HashMap<>();
-        }
-
-        String pdfFileName = excelFile.getName()
-                .replaceFirst("(?i)\\.xlsx$", ".pdf")
-                .replaceFirst("(?i)\\.xls$", ".pdf");
-        File pdfFile = new File(outputDir, pdfFileName);
-
-        String orientation = (String) request.getOrDefault("orientation", "portrait");
-        boolean landscape = "landscape".equalsIgnoreCase(orientation);
-//        boolean showSheetName = getBoolean(request, "show_sheet_name", true);
-        boolean includeHiddenSheets = (Boolean) request.getOrDefault("include_hidden_sheets", false);
-
-        PageSize pageSize = landscape ? PageSize.A4.rotate() : PageSize.A4;
-
-        try (
-                FileInputStream fis = new FileInputStream(excelFile);
-                Workbook workbook = WorkbookFactory.create(fis);
-                PdfWriter writer = new PdfWriter(pdfFile);
-                PdfDocument pdfDocument = new PdfDocument(writer);
-                Document document = new Document(pdfDocument, pageSize)
-        ) {
-            double leftMargin = (Double) request.getOrDefault("left_margin", 20.0);
-            double rightMargin = (Double) request.getOrDefault("right_margin", 20.0);
-            double topMargin = (Double) request.getOrDefault("top_margin", 20.0);
-            double bottomMargin = (Double) request.getOrDefault("bottom_margin", 20.0);
-
-            document.setMargins(
-                    (float) topMargin,
-                    (float) rightMargin,
-                    (float) bottomMargin,
-                    (float) leftMargin
-            );
-
-            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-            DataFormatter formatter = new DataFormatter();
-
-            boolean firstSheetAdded = false;
-
-            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-                if (!includeHiddenSheets && (workbook.isSheetHidden(i) || workbook.isSheetVeryHidden(i))) {
-                    continue;
-                }
-
-                Sheet sheet = workbook.getSheetAt(i);
-                if (getMaxColumnCount(sheet) <= 0) {
-                    continue;
-                }
-
-                int maxColumns = getMaxColumnCount(sheet);
-                if (maxColumns <= 0) {
-                    continue;
-                }
-
-                double tableScaleRatio = getTableScaleRatio(
-                        sheet, maxColumns, pageSize,
-                        leftMargin, rightMargin
-                );
-
-                if (firstSheetAdded) {
-                    document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
-                }
-
-                addSheetToPdf(document, workbook, sheet, formatter, evaluator, tableScaleRatio);
-                firstSheetAdded = true;
-            }
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("file", pdfFile);
-            result.put("pdf_files", java.util.List.of(pdfFile));
-            result.put("excel_file", excelFile);
-            result.put("extension", ".pdf");
-            result.put("full_report_name", pdfFileName.replaceFirst("(?i)\\.pdf$", ""));
-            return result;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to convert Excel to PDF using POI + iText", e);
-        }
-    }
-
-    private static void addSheetToPdf(
+    public static void addPage(
             Document document,
-            Workbook workbook,
-            Sheet sheet,
-            DataFormatter formatter,
-            FormulaEvaluator evaluator,
-            double tableScaleRatio) {
+            LinkedHashMap<String, Integer> bodyHeader,
+            List<LinkedHashMap<String, Object>> bodyDataRows,
+            Map<String, Object> pdfMap,
+            Rectangle pageSize,
+            float leftMargin,
+            float rightMargin
+    ) throws DocumentException {
 
-        int maxColumns = getMaxColumnCount(sheet);
-        if (maxColumns <= 0) {
+        if (bodyHeader == null || bodyHeader.isEmpty()) {
             return;
         }
 
-        float[] columnWidths = getColumnWidths(sheet, maxColumns);
+        if (bodyDataRows == null) {
+            bodyDataRows = new ArrayList<>();
+        }
 
-        com.itextpdf.layout.element.Table table = new Table(UnitValue.createPercentArray(columnWidths));
-        table.setWidth(UnitValue.createPercentValue(100));
-        table.setFixedLayout();
+        Map<String, Object> styleMap = null;
+        Map<String, Object> headerMap = null;
+        Map<String, Object> summaryMap = null;
 
-        Set<String> skippedCells = new HashSet<>();
-        for (int rowIndex = 0; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+        if (pdfMap != null) {
+            styleMap = (Map<String, Object>) pdfMap.get("pdf_style");
+            headerMap = (Map<String, Object>) pdfMap.get("pdf_header");
+            summaryMap = (Map<String, Object>) pdfMap.get("pdf_summary");
+        }
 
-            Row row = sheet.getRow(rowIndex);
-            if (row != null && row.getZeroHeight()) {
+        if (styleMap == null) {
+            styleMap = new HashMap<>();
+        }
+
+        int columnCount = bodyHeader.size();
+        float[] columnWidths = toPdfColumnWidths(bodyHeader);
+        float tableScaleRatio = getTableScaleRatio(bodyHeader, pageSize, leftMargin, rightMargin);
+
+        if (headerMap != null) {
+            renderPdfPart(document, headerMap, styleMap, columnCount, columnWidths, tableScaleRatio);
+            document.add(new Paragraph(" "));
+        }
+
+        PdfPTable table = new PdfPTable(columnWidths);
+        table.setWidthPercentage(100);
+        table.setSplitLate(false);
+        table.setSplitRows(true);
+
+        Font bodyHeaderFont = new Font(Font.HELVETICA, Math.max(5.5f, 13f * tableScaleRatio), Font.BOLD);
+        Color headerBg = Color.YELLOW;
+
+        for (String headerName : bodyHeader.keySet()) {
+            PdfPCell cell = new PdfPCell(new Phrase(headerName, bodyHeaderFont));
+            cell.setBackgroundColor(headerBg);
+            cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            cell.setPadding(Math.max(1f, 3f * tableScaleRatio));
+            cell.setNoWrap(false);
+            table.addCell(cell);
+        }
+
+        CellStyleConfig styleConfig = new CellStyleConfig(pdfMap);
+
+        for (Map<String, Object> row : bodyDataRows) {
+            for (String key : bodyHeader.keySet()) {
+                Object value = row.get(key);
+                PdfStyle pdfStyle = buildCellStyleFromRow(row, key, styleConfig, tableScaleRatio);
+                PdfPCell cell = createCell(value, pdfStyle, tableScaleRatio);
+                table.addCell(cell);
+            }
+        }
+
+        document.add(table);
+
+        if (summaryMap != null) {
+            document.add(new Paragraph(" "));
+            renderPdfPart(document, summaryMap, styleMap, columnCount, columnWidths, tableScaleRatio);
+        }
+    }
+
+    private static void renderPdfPart(
+            Document document,
+            Map<String, Object> partMap,
+            Map<String, Object> styles,
+            int columnCount,
+            float[] columnWidths,
+            float tableScaleRatio
+    ) throws DocumentException {
+
+        Object titleObj = partMap.get("title");
+        if (titleObj instanceof Map<?, ?> titleRaw) {
+            Map<String, Object> titleMap = (Map<String, Object>) titleRaw;
+            String text = Objects.toString(titleMap.get("text"), "");
+            String styleName = Objects.toString(titleMap.get("style"), "");
+
+            if (!text.isBlank()) {
+                PdfStyle style = getPdfStyle(styles, styleName, tableScaleRatio);
+                Paragraph p = new Paragraph(text, style.font);
+                p.setAlignment(style.horizontalAlignment);
+                p.setSpacingAfter(6f);
+                document.add(p);
+            }
+        }
+
+        Object sectionsObj = partMap.get("sections");
+        if (!(sectionsObj instanceof List<?> sections)) {
+            return;
+        }
+
+        for (Object sectionObj : sections) {
+            if (!(sectionObj instanceof Map<?, ?> sectionRaw)) {
                 continue;
             }
 
-            for (int colIndex = 0; colIndex < maxColumns; colIndex++) {
-                if (sheet.isColumnHidden(colIndex)) {
-                    continue;
+            Map<String, Object> section = (Map<String, Object>) sectionRaw;
+            String type = Objects.toString(section.get("type"), "");
+
+            switch (type) {
+                case "key_value" -> renderKeyValueSection(document, section, styles, tableScaleRatio);
+                case "summary" -> renderSummarySection(document, section, styles, columnCount, columnWidths, tableScaleRatio);
+                case "blank" -> document.add(new Paragraph(" "));
+                default -> {
                 }
-
-                String cellKey = rowIndex + ":" + colIndex;
-                if (skippedCells.contains(cellKey)) {
-                    continue;
-                }
-
-                CellRangeAddress mergedRegion = getMergedRegion(sheet, rowIndex, colIndex);
-                if (mergedRegion != null) {
-                    boolean isTopLeft =
-                            mergedRegion.getFirstRow() == rowIndex &&
-                                    mergedRegion.getFirstColumn() == colIndex;
-                    if (!isTopLeft) {
-                        continue;
-                    }
-                    markMergedCellsAsSkipped(skippedCells, mergedRegion, rowIndex, colIndex);
-                }
-
-                org.apache.poi.ss.usermodel.Cell poiCell = row == null
-                        ? null
-                        : row.getCell(colIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-
-                int rowSpan = 1;
-                int colSpan = 1;
-
-                if (mergedRegion != null) {
-                    rowSpan = mergedRegion.getLastRow() - mergedRegion.getFirstRow() + 1;
-                    colSpan = mergedRegion.getLastColumn() - mergedRegion.getFirstColumn() + 1;
-                }
-
-                com.itextpdf.layout.element.Cell pdfCell =
-                        new com.itextpdf.layout.element.Cell(rowSpan, colSpan);
-
-                String cellText = getCellText(poiCell, formatter, evaluator);
-                Paragraph paragraph = new Paragraph(cellText).setMargin(0);
-
-                if (poiCell != null) {
-                    CellStyle style = poiCell.getCellStyle();
-                    if (style != null && !style.getWrapText()) {
-                        paragraph.setProperty(Property.NO_SOFT_WRAP_INLINE, true);
-                    }
-                    applyCellStyle(pdfCell, workbook, poiCell, tableScaleRatio);
-                } else {
-//                    pdfCell.setBorder(new SolidBorder(new DeviceRgb(230, 230, 230), 0.3f));
-                    pdfCell.setBorder(Border.NO_BORDER);
-                }
-
-                pdfCell.add(paragraph);
-                table.addCell(pdfCell);
             }
         }
+    }
+
+    private static void renderKeyValueSection(
+            Document document,
+            Map<String, Object> section,
+            Map<String, Object> styles,
+            float tableScaleRatio
+    ) throws DocumentException {
+
+        Object dataObj = section.get("data");
+        if (!(dataObj instanceof LinkedHashMap<?, ?> dataRaw)) {
+            return;
+        }
+
+        String keyStyleName = Objects.toString(section.get("key_style"), "");
+        String valueStyleName = Objects.toString(section.get("value_style"), "");
+        float tableWidthPercentage = Float.parseFloat((String) section.getOrDefault("table_width_percentage", "50f"));
+        String strTableAlign = Objects.toString(section.get("table_align"), "left");
+        int tableAlign = "left".equals(strTableAlign) ? Element.ALIGN_LEFT : "center".equals(strTableAlign)
+                                                                                 ? Element.ALIGN_CENTER : Element.ALIGN_RIGHT;
+
+        PdfStyle keyStyle = getPdfStyle(styles, keyStyleName, tableScaleRatio);
+        PdfStyle valueStyle = getPdfStyle(styles, valueStyleName, tableScaleRatio);
+
+        float[] keyValueWidths = getKeyValueColumnWidths(dataRaw);
+        PdfPTable table = new PdfPTable(keyValueWidths);
+        // Do not always use 100% for key-value table
+        table.setWidthPercentage(tableWidthPercentage);
+        table.setSplitLate(false);
+        table.setHorizontalAlignment(tableAlign);
+
+        for (Map.Entry<?, ?> entry : dataRaw.entrySet()) {
+            table.addCell(createCell(entry.getKey(), keyStyle, tableScaleRatio));
+            table.addCell(createCell(entry.getValue(), valueStyle, tableScaleRatio));
+        }
+
         document.add(table);
     }
 
-    private static String getCellText(
-            org.apache.poi.ss.usermodel.Cell cell,
-            DataFormatter formatter,
-            FormulaEvaluator evaluator) {
+    private static void renderSummarySection(
+            Document document,
+            Map<String, Object> section,
+            Map<String, Object> styles,
+            int columnCount,
+            float[] columnWidths,
+            float tableScaleRatio
+    ) throws DocumentException {
 
-        if (cell == null) {
-            return "";
+        Map<String, Object> data = (Map<String, Object>) section.get("data");
+        if(data == null || data.isEmpty()){
+            return;
         }
 
-        try {
-            if (cell.getCellType() == CellType.FORMULA) {
-                return formatter.formatCellValue(cell, evaluator);
+        Map<String, Object> stylesByCol = (Map<String, Object>) section.get("styles_by_column");
+        PdfStyle defaultStyle = getPdfStyle(styles, Objects.toString(section.get("style"), ""), tableScaleRatio);
+
+//        Map<Integer, Object> rowValueMap = new HashMap<>();
+//        int maxRowIndex = -1;
+
+        PdfPTable table = new PdfPTable(columnWidths);
+        table.setWidthPercentage(100);
+        table.setSplitLate(false);
+        table.setSplitRows(true);
+
+        /*
+         * all summary data is rendered into one row.
+         *
+         * data key = target column index
+         * example:
+         * data.put("0", "Total");
+         * data.put("10", "100.00");
+         */
+        for (int colIndex = 0; colIndex < columnCount; colIndex++) {
+            String colKey = String.valueOf(colIndex);
+            Object value = data.get(colKey);
+            String styleName = null;
+
+            if(stylesByCol != null){
+                Object styleNameObj = stylesByCol.get(colKey);
+                if (styleNameObj != null) {
+                    styleName = styleNameObj.toString();
+                }
             }
 
-            return formatter.formatCellValue(cell);
-        } catch (Exception e) {
-            return cell.toString();
+            PdfStyle cellStyle = styleName != null
+                    ? getPdfStyle(styles, styleName, tableScaleRatio)
+                    : defaultStyle;
+
+            PdfPCell cell = createCell(value, cellStyle, tableScaleRatio);
+            table.addCell(cell);
         }
+
+        document.add(table);
     }
 
-    private static void applyCellStyle(
-            com.itextpdf.layout.element.Cell pdfCell,
-            Workbook workbook,
-            org.apache.poi.ss.usermodel.Cell poiCell,
-            double tableScaleRatio) {
+    private static PdfPCell createCell(Object value, PdfStyle style, float tableScaleRatio) {
+        String text = formatValue(value);
 
-        CellStyle style = poiCell.getCellStyle();
+        PdfPCell cell = new PdfPCell(new Phrase(text, style.font));
+        cell.setHorizontalAlignment(style.horizontalAlignment);
+        cell.setVerticalAlignment(style.verticalAlignment);
+        cell.setPadding(Math.max(1f, 3f * tableScaleRatio));
+        cell.setNoWrap(!style.wrapText);
 
-        if (style == null) {
-            return;
+        if (style.backgroundColor != null) {
+            cell.setBackgroundColor(style.backgroundColor);
         }
 
-        applyFont(pdfCell, workbook, style, tableScaleRatio);
-        applyFillColor(pdfCell, style);
-        applyAlignment(pdfCell, style);
-        applyBorders(pdfCell, style);
-//        pdfCell.setProperty(Property.NO_SOFT_WRAP_INLINE, style.getWrapText());
-
-        float padding = (float) Math.max(1.0, 3.0 * tableScaleRatio);
-        pdfCell.setPadding(padding);
-    }
-
-    private static void applyFont(
-            com.itextpdf.layout.element.Cell pdfCell,
-            Workbook workbook,
-            CellStyle style,
-            double tableScaleRatio) {
-
-        Font font = workbook.getFontAt(style.getFontIndex());
-        if (font == null) {
-            return;
-        }
-
-        // 1. Handle Bold and Italic using standard font families
-        try {
-//            String fontName = font.getFontName();
-            boolean isBold = font.getBold();
-            boolean isItalic = font.getItalic();
-
-            PdfFont pdfFont;
-            if (isBold && isItalic) {
-                pdfFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLDOBLIQUE);
-            } else if (isBold) {
-                pdfFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
-            } else if (isItalic) {
-                pdfFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
-            } else {
-                pdfFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
-            }
-
-            pdfCell.setFont(pdfFont);
-        } catch (IOException e) {
-            // Handle exception for font creation
-        }
-
-        // 2. Set Font Size
-        if (font.getFontHeightInPoints() > 0) {
-            float scaledFontSize = (float) (font.getFontHeightInPoints() * tableScaleRatio);
-            // Optional minimum font size, to avoid unreadable text
-            scaledFontSize = Math.max(5.5f, scaledFontSize);
-            pdfCell.setFontSize(scaledFontSize);
-        }
-
-        // 3. Set Font Color
-        Color fontColor = getPoiFontColorAsITextColor(font);
-        if (fontColor != null) {
-            pdfCell.setFontColor((com.itextpdf.kernel.colors.Color) fontColor);
-        }
-    }
-
-    private static void applyFillColor(
-            com.itextpdf.layout.element.Cell pdfCell,
-            CellStyle style) {
-
-        if (style.getFillPattern() == FillPatternType.NO_FILL) {
-            return;
-        }
-
-        com.itextpdf.kernel.colors.Color color = getPoiFillColorAsITextColor(style);
-
-        if (color != null) {
-            pdfCell.setBackgroundColor(color);
-        }
-    }
-
-    private static void applyAlignment(
-            com.itextpdf.layout.element.Cell pdfCell,
-            CellStyle style) {
-
-        HorizontalAlignment horizontalAlignment = style.getAlignment();
-
-        if (horizontalAlignment == HorizontalAlignment.CENTER) {
-            pdfCell.setTextAlignment(TextAlignment.CENTER);
-        } else if (horizontalAlignment == HorizontalAlignment.RIGHT) {
-            pdfCell.setTextAlignment(TextAlignment.RIGHT);
+        if (style.noBorder) {
+            cell.setBorder(Rectangle.NO_BORDER);
         } else {
-            pdfCell.setTextAlignment(TextAlignment.LEFT);
+            cell.setBorder(Rectangle.BOX);
+            cell.setBorderWidth(style.borderWidth);
         }
 
-        VerticalAlignment verticalAlignment = style.getVerticalAlignment();
-
-        if (verticalAlignment == VerticalAlignment.CENTER) {
-            pdfCell.setVerticalAlignment(com.itextpdf.layout.properties.VerticalAlignment.MIDDLE);
-        } else if (verticalAlignment == VerticalAlignment.BOTTOM) {
-            pdfCell.setVerticalAlignment(com.itextpdf.layout.properties.VerticalAlignment.BOTTOM);
-        } else {
-            pdfCell.setVerticalAlignment(com.itextpdf.layout.properties.VerticalAlignment.TOP);
-        }
+        return cell;
     }
 
-    private static void applyBorders(
-            com.itextpdf.layout.element.Cell pdfCell,
-            CellStyle style) {
+    private static PdfStyle buildCellStyleFromRow(
+            Map<String, Object> row,
+            String key,
+            CellStyleConfig config,
+            float tableScaleRatio
+    ) {
+        PdfStyle style = PdfStyle.defaultBody(tableScaleRatio);
 
-        boolean hasBorder =
-                style.getBorderTop() != BorderStyle.NONE ||
-                        style.getBorderBottom() != BorderStyle.NONE ||
-                        style.getBorderLeft() != BorderStyle.NONE ||
-                        style.getBorderRight() != BorderStyle.NONE;
-
-        if (!hasBorder) {
-//            pdfCell.setBorder(new SolidBorder(new DeviceRgb(230, 230, 230), 0.3f));
-            pdfCell.setBorder(Border.NO_BORDER);
-            return;
+        if (config == null) {
+            return style;
         }
 
-        if (style.getBorderTop() != BorderStyle.NONE) {
-            pdfCell.setBorderTop(new SolidBorder(0.5f));
+        Object cellColor = getSuffixValue(row, key, config.cellColorSuffix);
+        Object wrapText = getSuffixValue(row, key, config.cellWrapTextSuffix);
+        Object fontName = getSuffixValue(row, key, config.fontNameSuffix);
+        Object fontHeight = getSuffixValue(row, key, config.fontHeightSuffix);
+        Object fontBold = getSuffixValue(row, key, config.fontBoldSuffix);
+        Object fontItalic = getSuffixValue(row, key, config.fontItalicSuffix);
+        Object fontColor = getSuffixValue(row, key, config.fontColorSuffix);
+
+        if (cellColor != null) {
+            style.backgroundColor = toColor(cellColor);
         }
 
-        if (style.getBorderBottom() != BorderStyle.NONE) {
-            pdfCell.setBorderBottom(new SolidBorder(0.5f));
+        if (wrapText instanceof Boolean b) {
+            style.wrapText = b;
         }
 
-        if (style.getBorderLeft() != BorderStyle.NONE) {
-            pdfCell.setBorderLeft(new SolidBorder(0.5f));
+        String resolvedFontName = fontName != null ? fontName.toString() : FontFactory.HELVETICA;
+        float resolvedFontSize = fontHeight instanceof Number n ? n.floatValue() : 9f;
+        resolvedFontSize = Math.max(5.5f, resolvedFontSize * tableScaleRatio);
+
+        int fontStyle = Font.NORMAL;
+        if (Boolean.TRUE.equals(fontBold)) {
+            fontStyle |= Font.BOLD;
+        }
+        if (Boolean.TRUE.equals(fontItalic)) {
+            fontStyle |= Font.ITALIC;
         }
 
-        if (style.getBorderRight() != BorderStyle.NONE) {
-            pdfCell.setBorderRight(new SolidBorder(0.5f));
-        }
+        Color resolvedFontColor = fontColor != null ? toColor(fontColor) : Color.BLACK;
+        style.font = new Font(FontFactory.getFont(resolvedFontName).getFamily(), resolvedFontSize, fontStyle, resolvedFontColor);
+
+        return style;
     }
 
-    private static com.itextpdf.kernel.colors.Color getPoiFillColorAsITextColor(CellStyle style) {
-        org.apache.poi.ss.usermodel.Color poiColor = style.getFillForegroundColorColor();
+    private static PdfStyle getPdfStyle(
+            Map<String, Object> styles,
+            String styleName,
+            float tableScaleRatio
+    ) {
+        PdfStyle result = PdfStyle.defaultBody(tableScaleRatio);
 
-        if (poiColor instanceof XSSFColor xssfColor) {
-            byte[] rgb = xssfColor.getRGB();
+        if (styles == null || styleName == null || styleName.isBlank()) {
+            return result;
+        }
 
-            if (rgb != null && rgb.length >= 3) {
-                return new DeviceRgb(
-                        Byte.toUnsignedInt(rgb[0]),
-                        Byte.toUnsignedInt(rgb[1]),
-                        Byte.toUnsignedInt(rgb[2])
-                );
+        Object styleObj = styles.get(styleName);
+        if (!(styleObj instanceof Map<?, ?> raw)) {
+            return result;
+        }
+
+        Map<String, Object> map = (Map<String, Object>) raw;
+        Object cellColor = map.get("cell_color");
+        Object wrapText = map.get("cell_wrap_text");
+        Object fontName = map.get("font_name");
+        Object fontHeight = map.get("font_height");
+        Object fontBold = map.get("font_bold");
+        Object fontItalic = map.get("font_italic");
+        Object fontColor = map.get("font_color");
+        Object borderStyle = map.get("border_style");
+        Object borderColor = map.get("border_color");
+
+        if (cellColor != null) {
+            result.backgroundColor = toColor(cellColor);
+        }
+
+        if (wrapText instanceof Boolean b) {
+            result.wrapText = b;
+        }
+
+        String resolvedFontName = fontName != null ? fontName.toString() : FontFactory.HELVETICA;
+        float resolvedFontSize = fontHeight instanceof Number n ? n.floatValue() : 9f;
+        resolvedFontSize = Math.max(5.5f, resolvedFontSize * tableScaleRatio);
+
+        int resolvedFontStyle = Font.NORMAL;
+        if (Boolean.TRUE.equals(fontBold)) {
+            resolvedFontStyle |= Font.BOLD;
+        }
+        if (Boolean.TRUE.equals(fontItalic)) {
+            resolvedFontStyle |= Font.ITALIC;
+        }
+
+        Color resolvedFontColor = fontColor != null ? toColor(fontColor) : Color.BLACK;
+        result.font = new Font(
+                FontFactory.getFont(resolvedFontName).getFamily(),
+                resolvedFontSize,
+                resolvedFontStyle,
+                resolvedFontColor
+        );
+
+        if (borderColor != null) {
+            Color color = toColor(borderColor);
+            if (color != null) {
+                result.borderColor = color;
             }
         }
-
-        if (poiColor instanceof HSSFColor hssfColor) {
-            short[] triplet = hssfColor.getTriplet();
-
-            if (triplet != null && triplet.length >= 3) {
-                return new DeviceRgb(triplet[0], triplet[1], triplet[2]);
-            }
+        if (borderStyle instanceof Map<?, ?> rawBorderMap) {
+            applyBorderStyle(result, (Map<String, Object>) rawBorderMap);
         }
 
-        short colorIndex = style.getFillForegroundColor();
-
-        if (colorIndex == IndexedColors.YELLOW.getIndex()) {
-            return new DeviceRgb(255, 255, 0);
-        }
-
-        if (colorIndex == IndexedColors.GREY_25_PERCENT.getIndex()) {
-            return new DeviceRgb(217, 217, 217);
-        }
-
-        if (colorIndex == IndexedColors.LIGHT_BLUE.getIndex()) {
-            return new DeviceRgb(173, 216, 230);
-        }
-
-        return null;
+        return result;
     }
 
-    private static com.itextpdf.kernel.colors.Color getPoiFontColorAsITextColor(Font font) {
-        if (font == null) {
+    private static Object getSuffixValue(Map<String, Object> row, String key, String suffix) {
+        if (row == null || key == null || suffix == null || suffix.isBlank()) {
             return null;
         }
-
-        short colorIndex = font.getColor();
-
-        if (colorIndex == IndexedColors.RED.getIndex()) {
-            return new DeviceRgb(255, 0, 0);
-        }
-
-        if (colorIndex == IndexedColors.BLUE.getIndex()) {
-            return new DeviceRgb(0, 0, 255);
-        }
-
-        if (colorIndex == IndexedColors.GREEN.getIndex()) {
-            return new DeviceRgb(0, 128, 0);
-        }
-
-        if (colorIndex == IndexedColors.WHITE.getIndex()) {
-            return new DeviceRgb(255, 255, 255);
-        }
-
-        return null;
+        return row.get(key + suffix);
     }
 
-    private static int getMaxColumnCount(Sheet sheet) {
-        int maxColumns = 0;
+    private static float[] toPdfColumnWidths(LinkedHashMap<String, Integer> bodyHeader) {
+        float[] widths = new float[bodyHeader.size()];
+        int i = 0;
 
-        for (int rowIndex = 0; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
-            Row row = sheet.getRow(rowIndex);
-
-            if (row == null) {
-                continue;
+        for (Integer contentWidth : bodyHeader.values()) {
+            if (contentWidth == null) {
+                widths[i++] = 10f;
+            } else {
+                widths[i++] = Math.max(1f, contentWidth / 256f);
             }
-
-            if (row.getLastCellNum() > maxColumns) {
-                maxColumns = row.getLastCellNum();
-            }
-        }
-
-        return maxColumns;
-    }
-
-    private static float[] getColumnWidths(Sheet sheet, int maxColumns) {
-        float[] widths = new float[maxColumns];
-
-        for (int colIndex = 0; colIndex < maxColumns; colIndex++) {
-            if (sheet.isColumnHidden(colIndex)) {
-                widths[colIndex] = 0.1f;
-                continue;
-            }
-
-            int excelWidth = sheet.getColumnWidth(colIndex);
-
-            // Excel column width is based on 1/256 of character width.
-            // This maps it roughly into iText relative table widths.
-            widths[colIndex] = Math.max(1f, excelWidth / 256f);
         }
 
         return widths;
     }
 
-    private static CellRangeAddress getMergedRegion(Sheet sheet, int rowIndex, int colIndex) {
-        for (int i = 0; i < sheet.getNumMergedRegions(); i++) {
-            CellRangeAddress region = sheet.getMergedRegion(i);
+    private static float getTableScaleRatio(
+            LinkedHashMap<String, Integer> bodyHeader,
+            Rectangle pageSize,
+            float leftMargin,
+            float rightMargin
+    ) {
+        double totalContentWidth = 0;
 
-            if (region.isInRange(rowIndex, colIndex)) {
-                return region;
+        for (Integer width : bodyHeader.values()) {
+            if (width != null) {
+                totalContentWidth += width / 256.0;
+            }
+        }
+
+        double availablePdfWidth = pageSize.getWidth() - leftMargin - rightMargin;
+        double estimatedContentWidthInPoints = totalContentWidth * 7.0;
+
+        if (estimatedContentWidthInPoints <= 0) {
+            return 1.0f;
+        }
+
+        return (float) Math.min(1.0, availablePdfWidth / estimatedContentWidthInPoints);
+    }
+
+    private static String formatValue(Object value) {
+        if (value == null) {
+            return "";
+        }
+
+        if (value instanceof BigDecimal bd) {
+            return bd.stripTrailingZeros().toPlainString();
+        }
+
+        if (value instanceof Double d) {
+            return String.format(Locale.US, "%.2f", d);
+        }
+
+        if (value instanceof Float f) {
+            return String.format(Locale.US, "%.2f", f);
+        }
+
+        if (value instanceof LocalDateTime ldt) {
+            return ldt.toString();
+        }
+
+        return String.valueOf(value);
+    }
+
+    private static Color toColor(Object value) {
+        if (value == null) {
+            return null;
+        }
+
+        if (value instanceof Color color) {
+            return color;
+        }
+
+        if (value instanceof Number n) {
+            short index = n.shortValue();
+
+            // Common POI IndexedColors mapping.
+            if (index == 13) { // YELLOW
+                return Color.YELLOW;
+            }
+            if (index == 22) { // GREY_25_PERCENT
+                return new Color(217, 217, 217);
+            }
+            if (index == 48) { // LIGHT_BLUE
+                return new Color(173, 216, 230);
+            }
+            if (index == 10) { // RED
+                return Color.RED;
+            }
+            if (index == 12) { // BLUE
+                return Color.BLUE;
+            }
+            if (index == 17) { // GREEN
+                return new Color(0, 128, 0);
+            }
+            if (index == 9) { // WHITE
+                return Color.WHITE;
+            }
+
+            return null;
+        }
+
+        if (value instanceof String s) {
+            String hex = s.trim();
+
+            if (hex.startsWith("#")) {
+                hex = hex.substring(1);
+            }
+
+            if (hex.length() == 6) {
+                return new Color(
+                        Integer.parseInt(hex.substring(0, 2), 16),
+                        Integer.parseInt(hex.substring(2, 4), 16),
+                        Integer.parseInt(hex.substring(4, 6), 16)
+                );
             }
         }
 
         return null;
     }
 
-    private static void markMergedCellsAsSkipped(
-            Set<String> skippedCells,
-            CellRangeAddress mergedRegion,
-            int currentRow,
-            int currentCol) {
+    private static float getFloat(Map<String, Object> map, String key, float defaultValue) {
+        Object value = map.get(key);
 
-        for (int row = mergedRegion.getFirstRow(); row <= mergedRegion.getLastRow(); row++) {
-            for (int col = mergedRegion.getFirstColumn(); col <= mergedRegion.getLastColumn(); col++) {
-                if (row == currentRow && col == currentCol) {
-                    continue;
-                }
+        if (value instanceof Number n) {
+            return n.floatValue();
+        }
 
-                skippedCells.add(row + ":" + col);
+        return defaultValue;
+    }
+
+    private static int getInt(Map<String, Object> map, String key, int defaultValue) {
+        Object value = map.get(key);
+
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+
+        return defaultValue;
+    }
+
+    private static class PdfStyle {
+        Font font;
+        Color backgroundColor;
+        int horizontalAlignment = Element.ALIGN_LEFT;
+        int verticalAlignment = Element.ALIGN_MIDDLE;
+        boolean wrapText = true;
+        boolean noBorder = true;
+
+        Color borderColor = Color.BLACK;
+        float borderWidth = 0.5f;
+
+        boolean borderTop = false;
+        boolean borderBottom = false;
+        boolean borderLeft = false;
+        boolean borderRight = false;
+
+        float borderTopWidth = 0f;
+        float borderBottomWidth = 0f;
+        float borderLeftWidth = 0f;
+        float borderRightWidth = 0f;
+
+        static PdfStyle defaultBody(float scaleRatio) {
+            PdfStyle style = new PdfStyle();
+            style.font = new Font(Font.HELVETICA, Math.max(5.5f, 9f * scaleRatio), Font.NORMAL, Color.BLACK);
+            style.wrapText = true;
+            style.noBorder = true;
+            return style;
+        }
+    }
+
+    private static class CellStyleConfig {
+        String cellColorSuffix;
+        String cellWrapTextSuffix;
+        String fontNameSuffix;
+        String fontHeightSuffix;
+        String fontBoldSuffix;
+        String fontItalicSuffix;
+        String fontColorSuffix;
+
+        CellStyleConfig(Map<String, Object> styleMap) {
+            if (styleMap == null) {
+                return;
+            }
+
+            this.cellColorSuffix = asString(styleMap.get("cell_color_suffix"));
+            this.cellWrapTextSuffix = asString(styleMap.get("cell_wrap_text_suffix"));
+            this.fontNameSuffix = asString(styleMap.get("font_name_suffix"));
+            this.fontHeightSuffix = asString(styleMap.get("font_height_suffix"));
+            this.fontBoldSuffix = asString(styleMap.get("font_bold_suffix"));
+            this.fontItalicSuffix = asString(styleMap.get("font_italic_suffix"));
+            this.fontColorSuffix = asString(styleMap.get("font_color_suffix"));
+        }
+
+        private static String asString(Object value) {
+            return value == null ? null : String.valueOf(value);
+        }
+    }
+
+    private static void applyBorderStyle(PdfStyle style, Map<String, Object> borderMap) {
+        if (style == null || borderMap == null || borderMap.isEmpty()) {
+            return;
+        }
+
+        /*
+         * If contains "all", apply same border to all sides.
+         *
+         * Example:
+         * border_style: {
+         *   "all": "thin"
+         * }
+         */
+        Object allBorderObj = borderMap.get("all");
+        if (allBorderObj != null) {
+            float width = toBorderWidth(allBorderObj);
+
+            if (width > 0f) {
+                style.noBorder = false;
+
+                style.borderTop = true;
+                style.borderBottom = true;
+                style.borderLeft = true;
+                style.borderRight = true;
+
+                style.borderTopWidth = width;
+                style.borderBottomWidth = width;
+                style.borderLeftWidth = width;
+                style.borderRightWidth = width;
+            }
+
+            return;
+        }
+
+        /*
+         * Otherwise apply side by side.
+         *
+         * Example:
+         * border_style: {
+         *   "left": "thin",
+         *   "right": "thin",
+         *   "bottom": "medium"
+         * }
+         */
+        applySingleBorderSide(style, "top", borderMap.get("top"));
+        applySingleBorderSide(style, "bottom", borderMap.get("bottom"));
+        applySingleBorderSide(style, "left", borderMap.get("left"));
+        applySingleBorderSide(style, "right", borderMap.get("right"));
+    }
+
+    private static void applySingleBorderSide(PdfStyle style, String side, Object borderValue) {
+        if (style == null || borderValue == null) {
+            return;
+        }
+
+        float width = toBorderWidth(borderValue);
+        if (width <= 0f) {
+            return;
+        }
+
+        style.noBorder = false;
+
+        switch (side) {
+            case "top" -> {
+                style.borderTop = true;
+                style.borderTopWidth = width;
+            }
+            case "bottom" -> {
+                style.borderBottom = true;
+                style.borderBottomWidth = width;
+            }
+            case "left" -> {
+                style.borderLeft = true;
+                style.borderLeftWidth = width;
+            }
+            case "right" -> {
+                style.borderRight = true;
+                style.borderRightWidth = width;
+            }
+            default -> {
+                // Ignore unknown border side.
             }
         }
     }
 
-    private static double getTableScaleRatio(
-            Sheet sheet,
-            int maxColumns,
-            PageSize pageSize,
-            double leftMargin,
-            double rightMargin) {
+    private static float toBorderWidth(Object value) {
+        if (value == null) {
+            return 0f;
+        }
+        if (value instanceof Number n) {
+            return n.floatValue();
+        }
 
-        double totalExcelWidth = 0;
+        String border = value.toString().trim().toLowerCase(Locale.ROOT);
+        return switch (border) {
+            case "none", "no_border", "no-border", "false" -> 0f;
+            case "hair" -> 0.25f;
+            case "medium" -> 1.0f;
+            case "thick" -> 1.5f;
+            case "double" -> 1.2f;
+            default -> 0.5f;
+        };
+    }
 
-        for (int colIndex = 0; colIndex < maxColumns; colIndex++) {
-            if (sheet.isColumnHidden(colIndex)) {
+    private static float[] getKeyValueColumnWidths(LinkedHashMap<?, ?> data) {
+        int maxKeyLength = 0;
+
+        for (Object key : data.keySet()) {
+            if (key == null) {
                 continue;
             }
-            totalExcelWidth += sheet.getColumnWidth(colIndex) / 256.0;
-        }
 
-        double availablePdfWidth = pageSize.getWidth() - leftMargin - rightMargin;
+            maxKeyLength = Math.max(maxKeyLength, key.toString().length());
+        }
 
         /*
-         * Rough conversion:
-         * Excel column width unit is character-based.
-         * 7.0 is an approximation for points per Excel character width.
+         * Estimate key width based on text length.
+         * Minimum 1.0f keeps short keys readable.
+         * Maximum 4.0f prevents long keys from taking too much space.
          */
-        double estimatedExcelWidthInPoints = totalExcelWidth * 7.0;
-        if (estimatedExcelWidthInPoints <= 0) {
-            return 1.0;
+        float keyWidth = Math.max(1.0f, maxKeyLength / 8.0f);
+        keyWidth = Math.min(keyWidth, 4.0f);
+
+        /*
+         * Value gets the remaining larger portion.
+         * Total does not matter; only ratio matters.
+         */
+        float valueWidth = 12.0f - keyWidth;
+
+        if (valueWidth < 4.0f) {
+            valueWidth = 4.0f;
         }
-        double ratio = availablePdfWidth / estimatedExcelWidthInPoints;
-        // Do not enlarge font if Excel is already smaller than PDF page.
-        return Math.min(1.0, ratio);
+
+        return new float[]{keyWidth, valueWidth};
     }
 }
