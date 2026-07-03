@@ -8,18 +8,38 @@ import org.apache.poi.xssf.usermodel.*;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
 
 //@Service
 public class ExcelUtil {
 
+//    private static class ExtractedCellStyle {
+//        Short color;
+//        XSSFColor xssfColor;
+//        FillPatternType fillPattern;
+//        Boolean wrapText;
+//
+//        String fontName;
+//        Short fontHeight;
+//        Boolean isBold;
+//        Boolean isItalic;
+//        Short fontColor;
+//        XSSFColor xssfFontColor;
+//
+//        HorizontalAlignment horizontalAlignment;
+//        VerticalAlignment verticalAlignment;
+//    }
+
     public static Workbook createWorkbook(String sheetName, LinkedHashMap<String, Integer> headers, CellStyle headerStyle, XSSFFont headerFont) {
         XSSFWorkbook workbook = new XSSFWorkbook();
         String sheetNm = "Sheet1";
-        if(!sheetName.isEmpty()) {
+        if(sheetName != null && !sheetName.isEmpty()) {
             sheetNm = sheetName;
         }
         Sheet sheet = workbook.createSheet(sheetNm);
@@ -246,28 +266,11 @@ public class ExcelUtil {
                                  String sheetName,
                                  LinkedHashMap<String, Integer> bodyHeader,
                                  List<LinkedHashMap<String, Object>> bodyDataRows,
-                                 CellStyle bodyHeaderStyle, XSSFFont bodyHeaderFont,
+                                 Map<String, Object> bodyHeaderStyleMap, Map<String, Object> bodyHeaderFontMap,
                                  Map<String, Object> excelMap) {
-        if(bodyHeaderStyle == null) {
-            bodyHeaderStyle = workbook.createCellStyle();
-            bodyHeaderStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
-            bodyHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            bodyHeaderStyle.setWrapText(true);
-        }
-
-        XSSFWorkbook xssfWorkbook = (XSSFWorkbook) workbook;
-
-        if(bodyHeaderFont == null) {
-            bodyHeaderFont = xssfWorkbook.createFont();
-            bodyHeaderFont.setFontName("Arial");
-            bodyHeaderFont.setFontHeightInPoints((short) 13);
-            bodyHeaderFont.setBold(true);
-            bodyHeaderStyle.setFont(bodyHeaderFont);
-        }
-
         // cap sheet name to 31 characters
-        if(sheetName.length() > 31){
-            sheetName = sheetName.substring(0,31);
+        if (sheetName.length() > 31) {
+            sheetName = sheetName.substring(0, 31);
         }
 
         Sheet sheet = workbook.createSheet(sheetName);
@@ -276,11 +279,15 @@ public class ExcelUtil {
         Map<String, Object> styleMap = null;
         Map<String, Object> headerMap = null;
         Map<String, Object> summaryMap = null;
+        String defaultBodyHeaderStyle = null;
+        String defaultBodyDataStyle = null;
 
-        if(excelMap != null){
+        if (excelMap != null) {
             styleMap = (Map<String, Object>) excelMap.get("excel_styles");
-            headerMap = (Map<String, Object>)  excelMap.get("excel_header");
+            headerMap = (Map<String, Object>) excelMap.get("excel_header");
             summaryMap = (Map<String, Object>) excelMap.get("excel_summary");
+            defaultBodyHeaderStyle = (String) excelMap.get("default_body_header_style");
+            defaultBodyDataStyle = (String) excelMap.get("default_body_data_style");
         }
 
         // Add excel header
@@ -288,13 +295,25 @@ public class ExcelUtil {
             rowCount = renderExcelPart(sheet, workbook, headerMap, styleMap, rowCount);
         }
 
+        // Create reusable body header style
+        CellStyle bodyHeaderStyle = createBodyHeaderStyle(
+                workbook, sheet, styleMap, defaultBodyHeaderStyle,
+                bodyHeaderStyleMap, bodyHeaderFontMap
+        );
+
+        // Body header row
         Row bodyHeaderRow = getOrCreateRow(sheet, rowCount++);
         int columnCount = 0;
+
         for (Map.Entry<String, Integer> entry : bodyHeader.entrySet()) {
             Cell cell = bodyHeaderRow.createCell(columnCount);
             cell.setCellValue(entry.getKey());
             cell.setCellStyle(bodyHeaderStyle);
-            sheet.setColumnWidth(columnCount, entry.getValue());
+
+            if (entry.getValue() != null) {
+                sheet.setColumnWidth(columnCount, entry.getValue());
+            }
+
             columnCount++;
         }
 
@@ -308,106 +327,141 @@ public class ExcelUtil {
             excelStyleConfig = new ExcelStyleConfig(excelMap);
         }
 
+        // Reusable cache to avoid creating too many duplicated styles
+        Map<String, CellStyle> cellStyleCache = new HashMap<>();
+        Map<String, Object> defaultBodyDataStyleMap = createBodyDataStyleMap(styleMap, defaultBodyDataStyle);
+
+        // Body data rows
         for (Map<String, Object> row : bodyDataRows) {
             Row dataRow = sheet.createRow(rowCount++);
             columnCount = 0;
             for (Map.Entry<String, Object> entry : row.entrySet()) {
 
-                if(excelStyleConfig != null){
-                    if(excelStyleConfig.containsAnySuffix(entry.getKey())){
-                        continue;
-                    }
-                }
-
-                Cell cell = dataRow.createCell(columnCount++);
-
-                if(excelStyleConfig != null){
-                    Short color = null;
-                    XSSFColor xssfColor = null;
-                    FillPatternType fillPattern = null;
-                    Boolean wrapText = null;
-                    String fontName = null;
-                    Short fontHeight = null;
-                    Boolean isBold = null;
-                    Short fontColor = null;
-                    XSSFColor xssfFontColor = null;
-                    Boolean isItalic = null;
-
-                    if(excelStyleConfig.getCellColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellColorSuffix())) {
-                        if( row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix()) instanceof XSSFColor){
-                            xssfColor = (XSSFColor) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
-                        }
-                        else{
-                            color = (Short) row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
-                        }
-                    }
-                    if(excelStyleConfig.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix())) {
-                        fillPattern = (FillPatternType) row.get(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix());
-                    }
-                    if (excelStyleConfig.getCellWrapTextSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellWrapTextSuffix())) {
-                        wrapText = (Boolean) row.get(entry.getKey() + excelStyleConfig.getCellWrapTextSuffix());
-                    }
-
-                    if(excelStyleConfig.getFontNameSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontNameSuffix())) {
-                        fontName = (String) row.get(entry.getKey() + excelStyleConfig.getFontNameSuffix());
-                    }
-                    if(excelStyleConfig.getFontHeightInPointsSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontHeightInPointsSuffix())) {
-                        fontHeight = (Short) row.get(entry.getKey() + excelStyleConfig.getFontHeightInPointsSuffix());
-                    }
-                    if(excelStyleConfig.getFontBoldSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontBoldSuffix())) {
-                        isBold = (Boolean) row.get(entry.getKey() + excelStyleConfig.getFontBoldSuffix());
-                    }
-                    if(excelStyleConfig.getFontItalicSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontItalicSuffix())) {
-                        isItalic = (Boolean) row.get(entry.getKey() + excelStyleConfig.getFontItalicSuffix());
-                    }
-                    if(excelStyleConfig.getFontColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontColorSuffix())) {
-                        if( row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix()) instanceof XSSFColor){
-                            xssfFontColor = (XSSFColor) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
-                        }
-                        else{
-                            fontColor = (Short) row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
-                        }
-                    }
-
-                    Font font = null;
-                    if(xssfFontColor != null || fontName != null || fontHeight != null || isBold != null || isItalic != null || fontColor != null) {
-                        if (xssfFontColor != null) {
-                            font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
-                        } else {
-                            font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
-                        }
-                    }
-
-                    CellStyle style = null;
-                    if(xssfColor != null || color != null || fillPattern != null || wrapText != null || font != null) {
-                        if (xssfColor != null) {
-                            style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
-                        } else {
-                            style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
-                        }
-                    }
-
-                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+                if(excelStyleConfig != null && excelStyleConfig.containsAnySuffix(entry.getKey())){
                     continue;
                 }
 
-                if (entry.getValue() instanceof String) {
-                    cell.setCellValue((String) entry.getValue());
-                } else if (entry.getValue() instanceof Integer) {
-                    cell.setCellValue((Integer) entry.getValue());
-                } else if (entry.getValue() instanceof Long) {
-                    cell.setCellValue((Long) entry.getValue());
-                } else if (entry.getValue() instanceof Double) {
-                    cell.setCellValue((Double) entry.getValue());
-                } else if (entry.getValue() instanceof Float) {
-                    cell.setCellValue((Float) entry.getValue());
-                } else if (entry.getValue() instanceof Boolean) {
-                    cell.setCellValue((Boolean) entry.getValue());
-                } else if (entry.getValue() instanceof Date) {
-                    cell.setCellValue((Date) entry.getValue());
-                } else if (entry.getValue() instanceof LocalDateTime) {
-                    cell.setCellValue((LocalDateTime) entry.getValue());
-                }
+                int currentRow = rowCount - 1;
+                int currentCol = columnCount++;
+                Object cellValue = entry.getValue();
+                CellStyle style = resolveBodyCellStyle(
+                        workbook, sheet, row, entry.getKey(),
+                        cellValue, excelStyleConfig, defaultBodyDataStyleMap, cellStyleCache
+                );
+//                CellStyle style = null;
+//
+//                if(excelStyleConfig != null){
+//                    Short color = null;
+//                    XSSFColor xssfColor = null;
+//                    FillPatternType fillPattern = null;
+//                    Boolean wrapText = null;
+//
+//                    String fontName = null;
+//                    Short fontHeight = null;
+//                    Boolean isBold = null;
+//                    Short fontColor = null;
+//                    XSSFColor xssfFontColor = null;
+//                    Boolean isItalic = null;
+//
+//                    HorizontalAlignment horizontalAlignment = null;
+//                    VerticalAlignment verticalAlignment = null;
+//
+//                    if(excelStyleConfig.getCellColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellColorSuffix())) {
+//                        Object value = row.get(entry.getKey() + excelStyleConfig.getCellColorSuffix());
+//                        if(value instanceof XSSFColor){
+//                            xssfColor = (XSSFColor) value;
+//                        } else {
+//                            color = (Short) value;
+//                        }
+//                    }
+//                    if(excelStyleConfig.getCellFillPatternSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix())) {
+//                        fillPattern = (FillPatternType) row.get(entry.getKey() + excelStyleConfig.getCellFillPatternSuffix());
+//                    }
+//                    if (excelStyleConfig.getCellWrapTextSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellWrapTextSuffix())) {
+//                        wrapText = (Boolean) row.get(entry.getKey() + excelStyleConfig.getCellWrapTextSuffix());
+//                    }
+//                    if(excelStyleConfig.getCellHorizontalAlignmentSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellHorizontalAlignmentSuffix())) {
+//                        Object value = row.get(entry.getKey() + excelStyleConfig.getCellHorizontalAlignmentSuffix());
+//                        if(value instanceof HorizontalAlignment){
+//                            horizontalAlignment = (HorizontalAlignment) value;
+//                        } else if(value != null) {
+//                            horizontalAlignment = HorizontalAlignment.valueOf(value.toString().toUpperCase());
+//                        }
+//                    }
+//                    if(excelStyleConfig.getCellVerticalAlignmentSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getCellVerticalAlignmentSuffix())) {
+//                        Object value = row.get(entry.getKey() + excelStyleConfig.getCellVerticalAlignmentSuffix());
+//                        if(value instanceof VerticalAlignment){
+//                            verticalAlignment = (VerticalAlignment) value;
+//                        } else if(value != null) {
+//                            verticalAlignment = VerticalAlignment.valueOf(value.toString().toUpperCase());
+//                        }
+//                    }
+//                    if(excelStyleConfig.getFontNameSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontNameSuffix())) {
+//                        fontName = (String) row.get(entry.getKey() + excelStyleConfig.getFontNameSuffix());
+//                    }
+//                    if(excelStyleConfig.getFontHeightInPointsSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontHeightInPointsSuffix())) {
+//                        fontHeight = (Short) row.get(entry.getKey() + excelStyleConfig.getFontHeightInPointsSuffix());
+//                    }
+//                    if(excelStyleConfig.getFontBoldSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontBoldSuffix())) {
+//                        isBold = (Boolean) row.get(entry.getKey() + excelStyleConfig.getFontBoldSuffix());
+//                    }
+//                    if(excelStyleConfig.getFontItalicSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontItalicSuffix())) {
+//                        isItalic = (Boolean) row.get(entry.getKey() + excelStyleConfig.getFontItalicSuffix());
+//                    }
+//                    if(excelStyleConfig.getFontColorSuffix() != null && row.containsKey(entry.getKey() + excelStyleConfig.getFontColorSuffix())) {
+//                        Object value = row.get(entry.getKey() + excelStyleConfig.getFontColorSuffix());
+//                        if(value instanceof XSSFColor){
+//                            xssfFontColor = (XSSFColor) value;
+//                        } else {
+//                            fontColor = (Short) value;
+//                        }
+//                    }
+//
+//                    // Default rule:
+//                    // If the cell value is number and no explicit horizontal alignment is provided,
+//                    // align it to right.
+//                    if(horizontalAlignment == null && isNumericValue(cellValue)){
+//                        horizontalAlignment = HorizontalAlignment.RIGHT;
+//                    }
+//
+//                    Font font = null;
+//                    if(xssfFontColor != null || fontName != null || fontHeight != null || isBold != null || isItalic != null || fontColor != null) {
+//                        if (xssfFontColor != null) {
+//                            font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
+//                        } else {
+//                            font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+//                        }
+//                    }
+//
+//                    if(xssfColor != null || color != null || fillPattern != null || wrapText != null || font != null || horizontalAlignment != null || verticalAlignment != null) {
+//                        style = addCellStyle3(workbook, sheetName, color, xssfColor, fillPattern, wrapText, font, null, horizontalAlignment, verticalAlignment);
+//                    }
+////                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+////                    continue;
+//                } else if(isNumericValue(cellValue)) {
+//                    style = workbook.createCellStyle();
+//                    style.setAlignment(HorizontalAlignment.RIGHT);
+//                }
+
+                setCell(workbook, sheetName, currentRow, currentCol, cellValue, null, style);
+
+//                if (entry.getValue() instanceof String) {
+//                    cell.setCellValue((String) entry.getValue());
+//                } else if (entry.getValue() instanceof Integer) {
+//                    cell.setCellValue((Integer) entry.getValue());
+//                } else if (entry.getValue() instanceof Long) {
+//                    cell.setCellValue((Long) entry.getValue());
+//                } else if (entry.getValue() instanceof Double) {
+//                    cell.setCellValue((Double) entry.getValue());
+//                } else if (entry.getValue() instanceof Float) {
+//                    cell.setCellValue((Float) entry.getValue());
+//                } else if (entry.getValue() instanceof Boolean) {
+//                    cell.setCellValue((Boolean) entry.getValue());
+//                } else if (entry.getValue() instanceof Date) {
+//                    cell.setCellValue((Date) entry.getValue());
+//                } else if (entry.getValue() instanceof LocalDateTime) {
+//                    cell.setCellValue((LocalDateTime) entry.getValue());
+//                }
             }
         }
 
@@ -710,23 +764,7 @@ public class ExcelUtil {
         if(cell == null) {
             cell = dataRow.createCell(col);
         }
-        if (value instanceof String) {
-            cell.setCellValue((String) value);
-        } else if (value instanceof Integer) {
-            cell.setCellValue((Integer) value);
-        } else if (value instanceof Long) {
-            cell.setCellValue((Long) value);
-        } else if (value instanceof Double) {
-            cell.setCellValue((Double) value);
-        } else if (value instanceof Float) {
-            cell.setCellValue((Float) value);
-        } else if (value instanceof Boolean) {
-            cell.setCellValue((Boolean) value);
-        } else if (value instanceof Date) {
-            cell.setCellValue((Date) value);
-        } else if (value instanceof LocalDateTime) {
-            cell.setCellValue((LocalDateTime) value);
-        }
+        setCellValue(cell, value);
         if(width != null) {
             sheet.setColumnWidth(col, width.intValue());
         }
@@ -867,11 +905,19 @@ public class ExcelUtil {
         return style;
     }
 
-    public static CellStyle addCellStyle3(Workbook workbook, String sheetName, Short color, FillPatternType fillPatternType, Boolean setWrapText, Font font, Map<String, BorderStyle> border) {
+    public static CellStyle addCellStyle3(
+            Workbook workbook, String sheetName, Short color,
+            XSSFColor xssfColor, FillPatternType fillPatternType,
+            Boolean setWrapText, Font font, Map<String, BorderStyle> border,
+            HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment
+            ) {
 
         CellStyle style = workbook.createCellStyle();
 
-        if(color != null) {
+        if (xssfColor != null && workbook instanceof XSSFWorkbook) {
+            style.setFillForegroundColor(xssfColor);
+            style.setFillPattern(Objects.requireNonNullElse(fillPatternType, FillPatternType.SOLID_FOREGROUND));
+        } else if (color != null) {
             style.setFillForegroundColor(color);
             style.setFillPattern(Objects.requireNonNullElse(fillPatternType, FillPatternType.SOLID_FOREGROUND));
         }
@@ -901,6 +947,12 @@ public class ExcelUtil {
                     style.setBorderRight(border.get("right"));
                 }
             }
+        }
+        if(horizontalAlignment != null){
+            style.setAlignment(horizontalAlignment);
+        }
+        if(verticalAlignment != null){
+            style.setVerticalAlignment(verticalAlignment);
         }
 
         return style;
@@ -1240,7 +1292,7 @@ public class ExcelUtil {
         LinkedHashMap<String, Object> data = (LinkedHashMap<String, Object>) dataRaw;
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             String key = entry.getKey();
-            String value = (String) entry.getValue();
+            Object value = entry.getValue();
 
             if(value == null){
                 rowCount++;
@@ -1255,7 +1307,7 @@ public class ExcelUtil {
             }
 
             Cell valueCell = row.createCell(1);
-            valueCell.setCellValue(value);
+            setCellValue(valueCell, value);
             if (valueStyle != null) {
                 valueCell.setCellStyle(valueStyle);
             }
@@ -1292,14 +1344,27 @@ public class ExcelUtil {
                 continue;
             }
 
+            Object value = entry.getValue();
+
             Cell cell = row.createCell(columnIndex);
-            cell.setCellValue((String) entry.getValue());
+            setCellValue(cell, value);
 
             String styleName = (String) stylesByColumn.get(entry.getKey());
             CellStyle cellStyle = getOrCreateStyle(styleCache, styles, styleName, sheet);
 
             if (cellStyle != null) {
-                cell.setCellStyle(cellStyle);
+                // clone the style so alignment change will not affect cached style
+                CellStyle clonedStyle = sheet.getWorkbook().createCellStyle();
+                clonedStyle.cloneStyleFrom(cellStyle);
+
+                if (isNumericValue(value)) {
+                    clonedStyle.setAlignment(HorizontalAlignment.RIGHT);
+                }
+                cell.setCellStyle(clonedStyle);
+            } else if (isNumericValue(value)) {
+                CellStyle numberStyle = sheet.getWorkbook().createCellStyle();
+                numberStyle.setAlignment(HorizontalAlignment.RIGHT);
+                cell.setCellStyle(numberStyle);
             }
         }
 
@@ -1320,9 +1385,21 @@ public class ExcelUtil {
     public static CellStyle createCellStyleFromMap(Map<String, Object> style, Sheet sheet) {
         Workbook workbook = sheet.getWorkbook();
 
-        Short color = (Short) style.get("cell_color");
+        Short color = null;
+        XSSFColor xssfColor = null;
+        Object cellColorObj = style.get("cell_color");
+        if (cellColorObj instanceof XSSFColor) {
+            xssfColor = (XSSFColor) cellColorObj;
+        } else if (cellColorObj instanceof Short) {
+            color = (Short) cellColorObj;
+        } else if (cellColorObj instanceof Integer) {
+            color = ((Integer) cellColorObj).shortValue();
+        }
         FillPatternType fillPattern = (FillPatternType) style.get("cell_fill_pattern");
         Boolean wrapText = (Boolean) style.get("cell_wrap_text");
+
+        HorizontalAlignment horizontalAlignment = toHorizontalAlignment(style.get("cell_horizontal_alignment"));
+        VerticalAlignment verticalAlignment = toVerticalAlignment(style.get("cell_vertical_alignment"));
 
         String fontName = (String) style.getOrDefault("font_name", null);
         Short fontHeight = (Short) style.get("font_height");
@@ -1332,11 +1409,19 @@ public class ExcelUtil {
 
         Map<String, BorderStyle> borderStyleMap = (Map<String, BorderStyle>) style.get("border_style");
 
-        Font font = addFontStyle(workbook, fontName, fontColor,
-                fontHeight, isBold, isItalic);
+        Font font = null;
+        if (fontName != null || isBold != null || isItalic != null || fontColor != null || xssfColor != null) {
+            if (xssfColor != null) {
+                font = addFontStyle2(workbook, fontName, xssfColor, fontHeight, isBold, isItalic);
+            } else {
+                font = addFontStyle(workbook, fontName, fontColor,
+                        fontHeight, isBold, isItalic);
+            }
+        }
 
         return addCellStyle3(workbook, sheet.getSheetName(), color,
-                fillPattern, wrapText, font, borderStyleMap);
+                null, fillPattern, wrapText, font, borderStyleMap,
+                horizontalAlignment, verticalAlignment);
     }
 
     @SuppressWarnings("unchecked")
@@ -1369,5 +1454,225 @@ public class ExcelUtil {
     private static Row getOrCreateRow(Sheet sheet, int rowIndex) {
         Row row = sheet.getRow(rowIndex);
         return row != null ? row : sheet.createRow(rowIndex);
+    }
+
+    private static HorizontalAlignment toHorizontalAlignment(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof HorizontalAlignment) {
+            return (HorizontalAlignment) value;
+        }
+        return HorizontalAlignment.valueOf(value.toString().toUpperCase());
+    }
+
+    private static VerticalAlignment toVerticalAlignment(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof VerticalAlignment) {
+            return (VerticalAlignment) value;
+        }
+        return VerticalAlignment.valueOf(value.toString().toUpperCase());
+    }
+
+    private static void setCellValue(Cell cell, Object value) {
+
+        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
+        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
+
+        switch (value) {
+            case null -> cell.setBlank();
+            case BigDecimal bd -> cell.setCellValue(decimalFormat.format(bd));
+            case Integer i -> cell.setCellValue(decimalFormat.format(i));
+            case Long l -> cell.setCellValue(decimalFormat.format(l));
+            case Double d -> cell.setCellValue(decimalFormat2.format(d));
+            case Float f -> cell.setCellValue(decimalFormat2.format(f));
+            case String str -> {
+                String trimmed = str.trim();
+                try {
+                    BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
+                    cell.setCellValue(decimalFormat.format(bd));
+                } catch (NumberFormatException e) {
+                    cell.setCellValue(str);
+                }
+            }
+            case Boolean b -> cell.setCellValue(b);
+            case Date date -> cell.setCellValue(date);
+            case LocalDateTime localDateTime -> cell.setCellValue(localDateTime);
+            default -> cell.setCellValue(value.toString());
+        }
+    }
+
+    private static boolean isNumericValue(Object value) {
+        if (value instanceof Number) {return true;}
+        if (!(value instanceof String str)) {return false;}
+        if (str.isBlank()) {return false;}
+
+        try {
+            new java.math.BigDecimal(str.trim().replace(",", ""));
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static CellStyle createBodyHeaderStyle(
+            Workbook workbook, Sheet sheet,
+            Map<String, Object> excelStyles,
+            String defaultBodyHeaderStyle,
+            Map<String, Object> bodyHeaderStyleMap,
+            Map<String, Object> bodyHeaderFontMap
+    ) {
+
+        Map<String, Object> styleMap = new HashMap<>();
+
+        // Default header style
+        styleMap.put("cell_color", IndexedColors.YELLOW.getIndex());
+        styleMap.put("cell_fill_pattern", FillPatternType.SOLID_FOREGROUND);
+        styleMap.put("cell_wrap_text", true);
+        styleMap.put("cell_horizontal_alignment", HorizontalAlignment.LEFT);
+        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
+
+        styleMap.put("font_name", "Arial");
+        styleMap.put("font_height", (short) 13);
+        styleMap.put("font_bold", true);
+
+        /*
+         * If default_body_header_style exists,
+         * use it as style name and resolve from excel_styles.
+         */
+        if (defaultBodyHeaderStyle != null && !defaultBodyHeaderStyle.isBlank()
+                && excelStyles != null && excelStyles.get(defaultBodyHeaderStyle) instanceof Map<?, ?> rawStyleMap) {
+            styleMap.putAll((Map<String, Object>) rawStyleMap);
+        }
+
+        // Override default cell style if provided
+        if (bodyHeaderStyleMap != null) {
+            styleMap.putAll(bodyHeaderStyleMap);
+        }
+
+        // Override default font style if provided
+        if (bodyHeaderFontMap != null) {
+            styleMap.putAll(bodyHeaderFontMap);
+        }
+
+        return createCellStyleFromMap(styleMap, sheet);
+    }
+
+    private static CellStyle resolveBodyCellStyle(
+            Workbook workbook, Sheet sheet, Map<String, Object> row,
+            String fieldName, Object cellValue, ExcelStyleConfig excelStyleConfig,
+            Map<String, Object> defaultBodyDataStyleMap,
+            Map<String, CellStyle> cellStyleCache
+    ) {
+        Map<String, Object> styleMap = new HashMap<>();
+
+        // 1. Lowest priority: default style
+        if (defaultBodyDataStyleMap != null) {
+            styleMap.putAll(defaultBodyDataStyleMap);
+        }
+
+        // 2. Middle priority: numeric value alignment
+        if (isNumericValue(cellValue)) {
+            styleMap.put("cell_horizontal_alignment", HorizontalAlignment.RIGHT);
+        }
+
+        if (excelStyleConfig != null) {
+            updateStyle(styleMap, "cell_color", row, fieldName, excelStyleConfig.getCellColorSuffix());
+            updateStyle(styleMap, "cell_fill_pattern", row, fieldName, excelStyleConfig.getCellFillPatternSuffix());
+            updateStyle(styleMap, "cell_wrap_text", row, fieldName, excelStyleConfig.getCellWrapTextSuffix());
+            updateStyle(styleMap, "cell_horizontal_alignment", row, fieldName, excelStyleConfig.getCellHorizontalAlignmentSuffix());
+            updateStyle(styleMap, "cell_vertical_alignment", row, fieldName, excelStyleConfig.getCellVerticalAlignmentSuffix());
+            updateStyle(styleMap, "font_name", row, fieldName, excelStyleConfig.getFontNameSuffix());
+            updateStyle(styleMap, "font_height", row, fieldName, excelStyleConfig.getFontHeightInPointsSuffix());
+            updateStyle(styleMap, "font_bold", row, fieldName, excelStyleConfig.getFontBoldSuffix());
+            updateStyle(styleMap, "font_italic", row, fieldName, excelStyleConfig.getFontItalicSuffix());
+            updateStyle(styleMap, "font_color", row, fieldName, excelStyleConfig.getFontColorSuffix());
+        }
+
+        if (styleMap.isEmpty()) {
+            return null;
+        }
+
+        String cacheKey = buildStyleCacheKey(styleMap);
+        if (cellStyleCache.containsKey(cacheKey)) {
+            return cellStyleCache.get(cacheKey);
+        }
+
+        CellStyle style = createCellStyleFromMap(styleMap, sheet);
+        cellStyleCache.put(cacheKey, style);
+
+        return style;
+    }
+
+    private static void updateStyle(
+            Map<String, Object> styleMap, String styleKey, Map<String, Object> row,
+            String fieldName, String suffix
+    ) {
+        if (suffix == null) {
+            return;
+        }
+
+        String fullKey = fieldName + suffix;
+        if (row.containsKey(fullKey)) {
+            styleMap.put(styleKey, row.get(fullKey));
+        }
+    }
+
+    private static String buildStyleCacheKey(Map<String, Object> styleMap) {
+        return styleMap.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> entry.getKey() + "=" + String.valueOf(entry.getValue()))
+                .collect(Collectors.joining("|"));
+    }
+
+    private static CellStyle createBodyDataStyle(
+            Workbook workbook, Sheet sheet,
+            Map<String, Object> excelStyles,
+            String defaultBodyDataStyle
+    ) {
+        Map<String, Object> styleMap = new HashMap<>();
+
+        // Default body data style
+        styleMap.put("cell_wrap_text", true);
+        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
+        styleMap.put("font_name", "Arial");
+        styleMap.put("font_height", (short) 11);
+        styleMap.put("font_bold", false);
+
+        /*
+         * If default_body_data_style exists,
+         * use it as style name and resolve from excel_styles.
+         */
+        if (defaultBodyDataStyle != null && !defaultBodyDataStyle.isBlank()
+                && excelStyles != null
+                && excelStyles.get(defaultBodyDataStyle) instanceof Map<?, ?> rawStyleMap) {
+            styleMap.putAll((Map<String, Object>) rawStyleMap);
+        }
+
+        return createCellStyleFromMap(styleMap, sheet);
+    }
+
+    private static Map<String, Object> createBodyDataStyleMap(
+            Map<String, Object> excelStyles,
+            String defaultBodyDataStyle
+    ) {
+        Map<String, Object> styleMap = new HashMap<>();
+
+        styleMap.put("cell_wrap_text", true);
+        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
+        styleMap.put("font_name", "Arial");
+        styleMap.put("font_height", (short) 11);
+        styleMap.put("font_bold", false);
+
+        if (defaultBodyDataStyle != null && !defaultBodyDataStyle.isBlank()
+                && excelStyles != null
+                && excelStyles.get(defaultBodyDataStyle) instanceof Map<?, ?> rawStyleMap) {
+            styleMap.putAll((Map<String, Object>) rawStyleMap);
+        }
+
+        return styleMap;
     }
 }

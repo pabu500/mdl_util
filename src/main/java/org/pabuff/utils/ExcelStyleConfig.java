@@ -13,6 +13,9 @@ public class ExcelStyleConfig {
     private final String cellFillPatternSuffix;
     private final String cellWrapTextSuffix;
 
+    private final String cellHorizontalAlignmentSuffix;
+    private final String cellVerticalAlignmentSuffix;
+
     private final String fontColorSuffix;
     private final String fontNameSuffix;
     private final String fontHeightInPointsSuffix;
@@ -20,15 +23,23 @@ public class ExcelStyleConfig {
     private final String fontItalicSuffix;
 
     public ExcelStyleConfig(Map<String, Object> map) {
-        this.cellColorSuffix = map.get("cell_color") != null ? (String) map.get("cell_color") : null;
-        this.cellFillPatternSuffix = map.get("cell_fill_pattern") != null ? (String) map.get("cell_fill_pattern") : null;
-        this.cellWrapTextSuffix = map.get("cell_wrap_text") != null ? (String) map.get("cell_wrap_text") : null;
+        this.cellColorSuffix = getString(map, "cell_color");
+        this.cellFillPatternSuffix = getString(map, "cell_fill_pattern");
+        this.cellWrapTextSuffix = getString(map, "cell_wrap_text");
 
-        this.fontColorSuffix = map.get("font_color") != null ? (String) map.get("font_color") : null;
-        this.fontNameSuffix =  map.get("font_name") != null ? (String) map.get("font_name") : null;
-        this.fontHeightInPointsSuffix = map.get("font_height") != null ? (String) map.get("font_height") : null;
-        this.fontBoldSuffix = map.get("font_bold") != null ? (String) map.get("font_bold") : null;
-        this.fontItalicSuffix = map.get("font_italic") != null ? (String) map.get("font_italic") : null;
+        this.cellHorizontalAlignmentSuffix = getString(map, "cell_horizontal_alignment");
+        this.cellVerticalAlignmentSuffix = getString(map, "cell_vertical_alignment");
+
+        this.fontColorSuffix = getString(map, "font_color");
+        this.fontNameSuffix = getString(map, "font_name");
+        this.fontHeightInPointsSuffix = getString(map, "font_height");
+        this.fontBoldSuffix = getString(map, "font_bold");
+        this.fontItalicSuffix = getString(map, "font_italic");
+    }
+
+    private static String getString(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        return value != null ? (String) value : null;
     }
 
     //check str contains any of the suffix
