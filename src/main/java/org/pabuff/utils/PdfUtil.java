@@ -5,6 +5,7 @@ import org.openpdf.text.pdf.*;
 
 import java.awt.Color;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
@@ -32,11 +33,15 @@ public class PdfUtil {
         Map<String, Object> styleMap = null;
         Map<String, Object> headerMap = null;
         Map<String, Object> summaryMap = null;
+        String defaultBodyHeaderStyle = null;
+        String defaultBodyDataStyle = null;
 
         if (pdfMap != null) {
             styleMap = (Map<String, Object>) pdfMap.get("pdf_style");
             headerMap = (Map<String, Object>) pdfMap.get("pdf_header");
             summaryMap = (Map<String, Object>) pdfMap.get("pdf_summary");
+            defaultBodyDataStyle = (String) (pdfMap.getOrDefault("default_body_data_style", null));
+            defaultBodyHeaderStyle = (String) (pdfMap.getOrDefault("default_body_header_style", null));
         }
 
         if (styleMap == null) {
@@ -57,25 +62,24 @@ public class PdfUtil {
         table.setSplitLate(false);
         table.setSplitRows(true);
 
-        Font bodyHeaderFont = new Font(Font.HELVETICA, Math.max(5.5f, 13f * tableScaleRatio), Font.BOLD);
-        Color headerBg = Color.YELLOW;
-
+        PdfStyle bodyHeaderStyle = createBodyHeaderStyle(styleMap, defaultBodyHeaderStyle, tableScaleRatio);
         for (String headerName : bodyHeader.keySet()) {
-            PdfPCell cell = new PdfPCell(new Phrase(headerName, bodyHeaderFont));
-            cell.setBackgroundColor(headerBg);
-            cell.setHorizontalAlignment(Element.ALIGN_LEFT);
-            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-            cell.setPadding(Math.max(1f, 3f * tableScaleRatio));
-            cell.setNoWrap(false);
+            PdfPCell cell = createCell(headerName, bodyHeaderStyle, tableScaleRatio);
             table.addCell(cell);
         }
 
+        // Repeat body header row when table continues to next PDF page
+        if(!bodyDataRows.isEmpty()){
+            table.setHeaderRows(1);
+        }
+
         CellStyleConfig styleConfig = new CellStyleConfig(pdfMap);
+        PdfStyle defaultBodyStyle = getPdfStyle(styleMap, defaultBodyDataStyle, tableScaleRatio);
 
         for (Map<String, Object> row : bodyDataRows) {
             for (String key : bodyHeader.keySet()) {
                 Object value = row.get(key);
-                PdfStyle pdfStyle = buildCellStyleFromRow(row, key, styleConfig, tableScaleRatio);
+                PdfStyle pdfStyle = buildCellStyleFromRow(row, key, value, styleConfig, defaultBodyStyle, tableScaleRatio);
                 PdfPCell cell = createCell(value, pdfStyle, tableScaleRatio);
                 table.addCell(cell);
             }
@@ -150,20 +154,18 @@ public class PdfUtil {
 
         String keyStyleName = Objects.toString(section.get("key_style"), "");
         String valueStyleName = Objects.toString(section.get("value_style"), "");
-        float tableWidthPercentage = Float.parseFloat((String) section.getOrDefault("table_width_percentage", "50f"));
-        String strTableAlign = Objects.toString(section.get("table_align"), "left");
-        int tableAlign = "left".equals(strTableAlign) ? Element.ALIGN_LEFT : "center".equals(strTableAlign)
-                                                                                 ? Element.ALIGN_CENTER : Element.ALIGN_RIGHT;
-
         PdfStyle keyStyle = getPdfStyle(styles, keyStyleName, tableScaleRatio);
         PdfStyle valueStyle = getPdfStyle(styles, valueStyleName, tableScaleRatio);
 
-        float[] keyValueWidths = getKeyValueColumnWidths(dataRaw);
-        PdfPTable table = new PdfPTable(keyValueWidths);
-        // Do not always use 100% for key-value table
-        table.setWidthPercentage(tableWidthPercentage);
+        int widthPercentage = section.get("width_percentage") instanceof Number n ? n.intValue() : 100;
+        float keyWidth = section.get("key_width") instanceof Number n ? n.floatValue() : 3f;
+        float valueWidth = section.get("value_width") instanceof Number n ? n.floatValue() : 9f;
+
+        PdfPTable table = new PdfPTable(new  float[]{keyWidth, valueWidth});
+        table.setWidthPercentage(widthPercentage);
+        table.setHorizontalAlignment(Element.ALIGN_LEFT);
         table.setSplitLate(false);
-        table.setHorizontalAlignment(tableAlign);
+        table.setSplitRows(true);
 
         for (Map.Entry<?, ?> entry : dataRaw.entrySet()) {
             table.addCell(createCell(entry.getKey(), keyStyle, tableScaleRatio));
@@ -220,7 +222,20 @@ public class PdfUtil {
 
             PdfStyle cellStyle = styleName != null
                     ? getPdfStyle(styles, styleName, tableScaleRatio)
-                    : defaultStyle;
+                    : extractPdfStyle(defaultStyle);
+
+            boolean hasHorizontalAlignment = false;
+            if(styles != null && styleName != null && !styleName.isBlank()){
+                Object styleObj = styles.get(styleName);
+                if ((styleObj instanceof Map<?, ?> rawStyleMap)) {
+                    hasHorizontalAlignment = rawStyleMap.get("cell_horizontal_alignment") != null;
+                }
+            }
+
+            // Apply numeric alignment only when column-specific style is not provided
+            if (!hasHorizontalAlignment && isNumericValue(value)) {
+                cellStyle.horizontalAlignment = Element.ALIGN_RIGHT;
+            }
 
             PdfPCell cell = createCell(value, cellStyle, tableScaleRatio);
             table.addCell(cell);
@@ -255,17 +270,24 @@ public class PdfUtil {
     private static PdfStyle buildCellStyleFromRow(
             Map<String, Object> row,
             String key,
+            Object value,
             CellStyleConfig config,
+            PdfStyle defaultStyle,
             float tableScaleRatio
     ) {
-        PdfStyle style = PdfStyle.defaultBody(tableScaleRatio);
+        PdfStyle style = extractPdfStyle(defaultStyle);
 
         if (config == null) {
+            if (isNumericValue(value)) {
+                style.horizontalAlignment = Element.ALIGN_RIGHT;
+            }
             return style;
         }
 
         Object cellColor = getSuffixValue(row, key, config.cellColorSuffix);
         Object wrapText = getSuffixValue(row, key, config.cellWrapTextSuffix);
+        Object horizontalAlignment = getSuffixValue(row, key, config.cellHorizontalAlignmentSuffix);
+        Object verticalAlignment = getSuffixValue(row, key, config.cellVerticalAlignmentSuffix);
         Object fontName = getSuffixValue(row, key, config.fontNameSuffix);
         Object fontHeight = getSuffixValue(row, key, config.fontHeightSuffix);
         Object fontBold = getSuffixValue(row, key, config.fontBoldSuffix);
@@ -278,6 +300,16 @@ public class PdfUtil {
 
         if (wrapText instanceof Boolean b) {
             style.wrapText = b;
+        }
+
+        if (horizontalAlignment != null) {
+            style.horizontalAlignment = toHorizontalAlignment(horizontalAlignment);
+        } else if (isNumericValue(row.get(key))) {
+            style.horizontalAlignment = Element.ALIGN_RIGHT;
+        }
+
+        if (verticalAlignment != null) {
+            style.verticalAlignment = toVerticalAlignment(verticalAlignment);
         }
 
         String resolvedFontName = fontName != null ? fontName.toString() : FontFactory.HELVETICA;
@@ -317,6 +349,8 @@ public class PdfUtil {
         Map<String, Object> map = (Map<String, Object>) raw;
         Object cellColor = map.get("cell_color");
         Object wrapText = map.get("cell_wrap_text");
+        Object horizontalAlignment = map.get("cell_horizontal_alignment");
+        Object verticalAlignment = map.get("cell_vertical_alignment");
         Object fontName = map.get("font_name");
         Object fontHeight = map.get("font_height");
         Object fontBold = map.get("font_bold");
@@ -331,6 +365,14 @@ public class PdfUtil {
 
         if (wrapText instanceof Boolean b) {
             result.wrapText = b;
+        }
+
+        if (horizontalAlignment != null) {
+            result.horizontalAlignment = toHorizontalAlignment(horizontalAlignment);
+        }
+
+        if (verticalAlignment != null) {
+            result.verticalAlignment = toVerticalAlignment(verticalAlignment);
         }
 
         String resolvedFontName = fontName != null ? fontName.toString() : FontFactory.HELVETICA;
@@ -417,23 +459,27 @@ public class PdfUtil {
             return "";
         }
 
-        if (value instanceof BigDecimal bd) {
-            return bd.stripTrailingZeros().toPlainString();
-        }
+        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
+        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
 
-        if (value instanceof Double d) {
-            return String.format(Locale.US, "%.2f", d);
-        }
-
-        if (value instanceof Float f) {
-            return String.format(Locale.US, "%.2f", f);
-        }
-
-        if (value instanceof LocalDateTime ldt) {
-            return ldt.toString();
-        }
-
-        return String.valueOf(value);
+        return switch (value) {
+            case BigDecimal bd -> decimalFormat.format(bd);
+            case Integer i -> decimalFormat.format(i);
+            case Long l -> decimalFormat.format(l);
+            case Double d -> decimalFormat2.format(d);
+            case Float f -> decimalFormat2.format(f);
+            case LocalDateTime ldt -> ldt.toString();
+            case String str -> {
+                String trimmed = str.trim();
+                try {
+                    BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
+                    yield decimalFormat.format(bd);
+                } catch (NumberFormatException e) {
+                    yield str;
+                }
+            }
+            default -> String.valueOf(value);
+        };
     }
 
     private static Color toColor(Object value) {
@@ -454,6 +500,12 @@ public class PdfUtil {
             }
             if (index == 22) { // GREY_25_PERCENT
                 return new Color(217, 217, 217);
+            }
+            if (index == 55) { // GREY_40_PERCENT
+                return new Color(153, 153, 153);
+            }
+            if (index == 23) { // GREY_50_PERCENT
+                return new Color(128, 128, 128);
             }
             if (index == 48) { // LIGHT_BLUE
                 return new Color(173, 216, 230);
@@ -493,26 +545,6 @@ public class PdfUtil {
         return null;
     }
 
-    private static float getFloat(Map<String, Object> map, String key, float defaultValue) {
-        Object value = map.get(key);
-
-        if (value instanceof Number n) {
-            return n.floatValue();
-        }
-
-        return defaultValue;
-    }
-
-    private static int getInt(Map<String, Object> map, String key, int defaultValue) {
-        Object value = map.get(key);
-
-        if (value instanceof Number n) {
-            return n.intValue();
-        }
-
-        return defaultValue;
-    }
-
     private static class PdfStyle {
         Font font;
         Color backgroundColor;
@@ -546,6 +578,10 @@ public class PdfUtil {
     private static class CellStyleConfig {
         String cellColorSuffix;
         String cellWrapTextSuffix;
+
+        String cellHorizontalAlignmentSuffix;
+        String cellVerticalAlignmentSuffix;
+
         String fontNameSuffix;
         String fontHeightSuffix;
         String fontBoldSuffix;
@@ -559,6 +595,10 @@ public class PdfUtil {
 
             this.cellColorSuffix = asString(styleMap.get("cell_color_suffix"));
             this.cellWrapTextSuffix = asString(styleMap.get("cell_wrap_text_suffix"));
+
+            this.cellHorizontalAlignmentSuffix = asString(styleMap.get("cell_horizontal_alignment_suffix"));
+            this.cellVerticalAlignmentSuffix = asString(styleMap.get("cell_vertical_alignment_suffix"));
+
             this.fontNameSuffix = asString(styleMap.get("font_name_suffix"));
             this.fontHeightSuffix = asString(styleMap.get("font_height_suffix"));
             this.fontBoldSuffix = asString(styleMap.get("font_bold_suffix"));
@@ -705,5 +745,110 @@ public class PdfUtil {
         }
 
         return new float[]{keyWidth, valueWidth};
+    }
+
+    private static int toHorizontalAlignment(Object value) {
+        if (value == null) {
+            return Element.ALIGN_LEFT;
+        }
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+
+        String align = value.toString().trim().toLowerCase(Locale.ROOT);
+        return switch (align) {
+            case "center", "centre" -> Element.ALIGN_CENTER;
+            case "right" -> Element.ALIGN_RIGHT;
+            case "justify" -> Element.ALIGN_JUSTIFIED;
+            default -> Element.ALIGN_LEFT;
+        };
+    }
+
+    private static int toVerticalAlignment(Object value) {
+        if (value == null) {
+            return Element.ALIGN_MIDDLE;
+        }
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+
+        String align = value.toString().trim().toLowerCase(Locale.ROOT);
+        return switch (align) {
+            case "top" -> Element.ALIGN_TOP;
+            case "bottom" -> Element.ALIGN_BOTTOM;
+            default -> Element.ALIGN_MIDDLE;
+        };
+    }
+
+    private static boolean isNumericValue(Object value) {
+        if (value instanceof Number) {return true;}
+        if (!(value instanceof String str)) {return false;}
+        if (str.isBlank()) {return false;}
+
+        try {
+            new BigDecimal(str.trim().replace(",", ""));
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static PdfStyle createBodyHeaderStyle(Map<String, Object> styles, String defaultBodyHeaderStyle, float tableScaleRatio) {
+        /*
+         * If default_body_header_style is provided,
+         * use it as a style name and resolve from pdf_style.
+         */
+        if (defaultBodyHeaderStyle != null && !defaultBodyHeaderStyle.isBlank()) {
+            return getPdfStyle(styles, defaultBodyHeaderStyle, tableScaleRatio);
+        }
+
+        /*
+         * Fallback default body header style.
+         */
+        PdfStyle style = PdfStyle.defaultBody(tableScaleRatio);
+
+        style.font = new Font(
+                Font.HELVETICA,
+                Math.max(5.5f, 13f * tableScaleRatio),
+                Font.BOLD,
+                Color.BLACK
+        );
+        style.backgroundColor = Color.YELLOW;
+        style.horizontalAlignment = Element.ALIGN_LEFT;
+        style.verticalAlignment = Element.ALIGN_MIDDLE;
+        style.wrapText = true;
+        style.noBorder = true;
+
+        return style;
+    }
+
+    private static PdfStyle extractPdfStyle(PdfStyle source) {
+        if (source == null) {
+            return PdfStyle.defaultBody(1.0f);
+        }
+
+        PdfStyle resultStyle = new PdfStyle();
+
+        resultStyle.font = source.font;
+        resultStyle.backgroundColor = source.backgroundColor;
+        resultStyle.horizontalAlignment = source.horizontalAlignment;
+        resultStyle.verticalAlignment = source.verticalAlignment;
+        resultStyle.wrapText = source.wrapText;
+        resultStyle.noBorder = source.noBorder;
+
+        resultStyle.borderColor = source.borderColor;
+        resultStyle.borderWidth = source.borderWidth;
+
+        resultStyle.borderTop = source.borderTop;
+        resultStyle.borderBottom = source.borderBottom;
+        resultStyle.borderLeft = source.borderLeft;
+        resultStyle.borderRight = source.borderRight;
+
+        resultStyle.borderTopWidth = source.borderTopWidth;
+        resultStyle.borderBottomWidth = source.borderBottomWidth;
+        resultStyle.borderLeftWidth = source.borderLeftWidth;
+        resultStyle.borderRightWidth = source.borderRightWidth;
+
+        return resultStyle;
     }
 }
