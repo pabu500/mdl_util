@@ -1478,21 +1478,21 @@ public class ExcelUtil {
 
     private static void setCellValue(Cell cell, Object value) {
 
-        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
+//        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
         DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
 
         switch (value) {
             case null -> cell.setBlank();
-            case BigDecimal bd -> cell.setCellValue(decimalFormat.format(bd));
-            case Integer i -> cell.setCellValue(decimalFormat.format(i));
-            case Long l -> cell.setCellValue(decimalFormat.format(l));
+            case BigDecimal bd -> cell.setCellValue(decimalFormat2.format(bd));
+            case Integer i -> cell.setCellValue(decimalFormat2.format(i));
+            case Long l -> cell.setCellValue(decimalFormat2.format(l));
             case Double d -> cell.setCellValue(decimalFormat2.format(d));
             case Float f -> cell.setCellValue(decimalFormat2.format(f));
             case String str -> {
                 String trimmed = str.trim();
                 try {
                     BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
-                    cell.setCellValue(decimalFormat.format(bd));
+                    cell.setCellValue(decimalFormat2.format(bd));
                 } catch (NumberFormatException e) {
                     cell.setCellValue(str);
                 }
