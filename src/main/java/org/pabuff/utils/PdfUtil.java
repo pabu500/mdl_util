@@ -459,13 +459,13 @@ public class PdfUtil {
             return "";
         }
 
-        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
+//        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
         DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
 
         return switch (value) {
-            case BigDecimal bd -> decimalFormat.format(bd);
-            case Integer i -> decimalFormat.format(i);
-            case Long l -> decimalFormat.format(l);
+            case BigDecimal bd -> decimalFormat2.format(bd);
+            case Integer i -> decimalFormat2.format(i);
+            case Long l -> decimalFormat2.format(l);
             case Double d -> decimalFormat2.format(d);
             case Float f -> decimalFormat2.format(f);
             case LocalDateTime ldt -> ldt.toString();
@@ -473,7 +473,7 @@ public class PdfUtil {
                 String trimmed = str.trim();
                 try {
                     BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
-                    yield decimalFormat.format(bd);
+                    yield decimalFormat2.format(bd);
                 } catch (NumberFormatException e) {
                     yield str;
                 }
