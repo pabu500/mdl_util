@@ -470,7 +470,12 @@ public class PdfUtil {
             case Float f -> decimalFormat2.format(f);
             case LocalDateTime ldt -> ldt.toString();
             case String str -> {
+                // Strings starting with ' are treated as text.
                 String trimmed = str.trim();
+                if (trimmed.startsWith("'")) {
+                    yield trimmed.substring(1);
+                }
+
                 try {
                     BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
                     yield decimalFormat2.format(bd);
