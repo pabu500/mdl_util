@@ -1489,7 +1489,13 @@ public class ExcelUtil {
             case Double d -> cell.setCellValue(decimalFormat2.format(d));
             case Float f -> cell.setCellValue(decimalFormat2.format(f));
             case String str -> {
+                // Strings starting with ' are treated as text.
                 String trimmed = str.trim();
+                if (trimmed.startsWith("'")) {
+                    cell.setCellValue(trimmed.substring(1));
+                    return;
+                }
+
                 try {
                     BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
                     cell.setCellValue(decimalFormat2.format(bd));
