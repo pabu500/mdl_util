@@ -248,5 +248,20 @@ public class MathUtil {
         bd = bd.setScale(places, RoundingMode.HALF_UP);
         return bd.doubleValue();
     }
+    public static String formatNumber(BigDecimal value) {
+        if (value == null) {
+            return "";
+        }
+
+        DecimalFormat format = new DecimalFormat("#,##0");
+
+        // Ensure scale isn't negative to prevent DecimalFormat exceptions
+        int scale = Math.max(0, value.scale());
+
+        format.setMinimumFractionDigits(scale);
+        format.setMaximumFractionDigits(scale);
+
+        return format.format(value);
+    }
 }
 

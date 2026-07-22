@@ -1479,15 +1479,16 @@ public class ExcelUtil {
     private static void setCellValue(Cell cell, Object value) {
 
 //        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
-        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
+//        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
+//        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.################");
 
         switch (value) {
             case null -> cell.setBlank();
-            case BigDecimal bd -> cell.setCellValue(decimalFormat2.format(bd));
-            case Integer i -> cell.setCellValue(decimalFormat2.format(i));
-            case Long l -> cell.setCellValue(decimalFormat2.format(l));
-            case Double d -> cell.setCellValue(decimalFormat2.format(d));
-            case Float f -> cell.setCellValue(decimalFormat2.format(f));
+            case BigDecimal bd -> cell.setCellValue(MathUtil.formatNumber(bd));
+            case Integer i -> cell.setCellValue(MathUtil.formatNumber(BigDecimal.valueOf(i)));
+            case Long l -> cell.setCellValue(MathUtil.formatNumber(BigDecimal.valueOf(l)));
+            case Double d -> cell.setCellValue(MathUtil.formatNumber(BigDecimal.valueOf(d)));
+            case Float f -> cell.setCellValue(MathUtil.formatNumber(BigDecimal.valueOf(f)));
             case String str -> {
                 // Strings starting with ' are treated as text.
                 String trimmed = str.trim();
@@ -1498,7 +1499,7 @@ public class ExcelUtil {
 
                 try {
                     BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
-                    cell.setCellValue(decimalFormat2.format(bd));
+                    cell.setCellValue(MathUtil.formatNumber(bd));
                 } catch (NumberFormatException e) {
                     cell.setCellValue(str);
                 }
