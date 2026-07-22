@@ -253,6 +253,10 @@ public class PdfUtil {
         cell.setPadding(Math.max(1f, 3f * tableScaleRatio));
         cell.setNoWrap(!style.wrapText);
 
+        // Improve automatic height calculation around the font.
+        cell.setUseAscender(true);
+        cell.setUseDescender(true);
+
         if (style.backgroundColor != null) {
             cell.setBackgroundColor(style.backgroundColor);
         }
@@ -313,8 +317,8 @@ public class PdfUtil {
         }
 
         String resolvedFontName = fontName != null ? fontName.toString() : FontFactory.HELVETICA;
-        float resolvedFontSize = fontHeight instanceof Number n ? n.floatValue() : 9f;
-        resolvedFontSize = Math.max(5.5f, resolvedFontSize * tableScaleRatio);
+        float baseFontSize = fontHeight instanceof Number n ? n.floatValue() : style.font.getSize() / style.scaleRate;
+        float resolvedFontSize = Math.max(5.5f, baseFontSize * style.scaleRate);
 
         int fontStyle = Font.NORMAL;
         if (Boolean.TRUE.equals(fontBold)) {
@@ -358,6 +362,7 @@ public class PdfUtil {
         Object fontColor = map.get("font_color");
         Object borderStyle = map.get("border_style");
         Object borderColor = map.get("border_color");
+        Object scaleRate = map.get("scale_rate");
 
         if (cellColor != null) {
             result.backgroundColor = toColor(cellColor);
@@ -376,8 +381,11 @@ public class PdfUtil {
         }
 
         String resolvedFontName = fontName != null ? fontName.toString() : FontFactory.HELVETICA;
+
+        double scaleRateValue = scaleRate instanceof Number n ? n.doubleValue() : 1.0;
+        result.scaleRate = (float) (scaleRateValue * tableScaleRatio);
         float resolvedFontSize = fontHeight instanceof Number n ? n.floatValue() : 9f;
-        resolvedFontSize = Math.max(5.5f, resolvedFontSize * tableScaleRatio);
+        resolvedFontSize = Math.max(5.5f, resolvedFontSize * result.scaleRate);
 
         int resolvedFontStyle = Font.NORMAL;
         if (Boolean.TRUE.equals(fontBold)) {
@@ -460,14 +468,15 @@ public class PdfUtil {
         }
 
 //        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
-        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
+//        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
+//        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.################");
 
         return switch (value) {
-            case BigDecimal bd -> decimalFormat2.format(bd);
-            case Integer i -> decimalFormat2.format(i);
-            case Long l -> decimalFormat2.format(l);
-            case Double d -> decimalFormat2.format(d);
-            case Float f -> decimalFormat2.format(f);
+            case BigDecimal bd -> MathUtil.formatNumber(bd);
+            case Integer i -> MathUtil.formatNumber(BigDecimal.valueOf(i));
+            case Long l -> MathUtil.formatNumber(BigDecimal.valueOf(l));
+            case Double d -> MathUtil.formatNumber(BigDecimal.valueOf(d));
+            case Float f -> MathUtil.formatNumber(BigDecimal.valueOf(f));
             case LocalDateTime ldt -> ldt.toString();
             case String str -> {
                 // Strings starting with ' are treated as text.
@@ -478,7 +487,7 @@ public class PdfUtil {
 
                 try {
                     BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
-                    yield decimalFormat2.format(bd);
+                    yield MathUtil.formatNumber(bd);
                 } catch (NumberFormatException e) {
                     yield str;
                 }
@@ -570,6 +579,8 @@ public class PdfUtil {
         float borderBottomWidth = 0f;
         float borderLeftWidth = 0f;
         float borderRightWidth = 0f;
+
+        float scaleRate = 1.0f;
 
         static PdfStyle defaultBody(float scaleRatio) {
             PdfStyle style = new PdfStyle();
@@ -853,6 +864,8 @@ public class PdfUtil {
         resultStyle.borderBottomWidth = source.borderBottomWidth;
         resultStyle.borderLeftWidth = source.borderLeftWidth;
         resultStyle.borderRightWidth = source.borderRightWidth;
+
+        resultStyle.scaleRate = source.scaleRate;
 
         return resultStyle;
     }
