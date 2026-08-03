@@ -846,7 +846,7 @@ public class SqlUtil {
             if(sqlMap.get("targets") != null){
                 if(sqlMap.get("targets") instanceof Map<?,?>){
                     Map<String, String> targets = (Map<String, String>) sqlMap.get("targets");
-                    if(!targets.keySet().isEmpty()) {
+                    if(!targets.isEmpty()) {
                         for (String key : targets.keySet()) {
                             targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
                         }
@@ -880,7 +880,7 @@ public class SqlUtil {
                 continue;
             }
 
-            if(content.get(key) instanceof Integer || content.get(key) instanceof Long || content.get(key) instanceof Double) {
+            if(content.get(key) instanceof Integer || content.get(key) instanceof Long || content.get(key) instanceof Double ||  content.get(key) instanceof Boolean) {
                 sql.append(" ").append(key).append(" = ").append(content.get(key)).append(",");
             } else {
                 if((content.get(key)+"").isEmpty()) {
