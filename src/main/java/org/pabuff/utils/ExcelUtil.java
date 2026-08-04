@@ -307,8 +307,8 @@ public class ExcelUtil {
 
         for (Map.Entry<String, Integer> entry : bodyHeader.entrySet()) {
             Cell cell = bodyHeaderRow.createCell(columnCount);
-            cell.setCellValue(entry.getKey());
             cell.setCellStyle(bodyHeaderStyle);
+            cell.setCellValue(entry.getKey());
 
             if (entry.getValue() != null) {
                 sheet.setColumnWidth(columnCount, entry.getValue());
@@ -531,8 +531,8 @@ public class ExcelUtil {
         int columnCount = 0;
         for (Map.Entry<String, Integer> entry : headers.entrySet()) {
             Cell cell = headerRow.createCell(columnCount);
-            cell.setCellValue(entry.getKey());
             cell.setCellStyle(headerStyle);
+            cell.setCellValue(entry.getKey());
             sheet.setColumnWidth(columnCount, entry.getValue());
             columnCount++;
         }
@@ -764,12 +764,12 @@ public class ExcelUtil {
         if(cell == null) {
             cell = dataRow.createCell(col);
         }
+        if(style != null) {
+            cell.setCellStyle(style);
+        }
         setCellValue(cell, value);
         if(width != null) {
             sheet.setColumnWidth(col, width.intValue());
-        }
-        if(style != null) {
-            cell.setCellStyle(style);
         }
     }
 
@@ -1249,13 +1249,13 @@ public class ExcelUtil {
             if (titleText != null && !titleText.isEmpty()) {
                 Row titleRow = getOrCreateRow(sheet, rowCount++);
                 Cell cell = titleRow.createCell(0);
-                cell.setCellValue(titleText);
 
                 CellStyle titleStyle = getOrCreateStyle(styleCache, excelStyles, strStyle, sheet);
                 if (titleStyle != null) {
                     cell.setCellStyle(titleStyle);
                 }
 
+                cell.setCellValue(titleText);
                 sheet.setColumnWidth(0, 10000);
             }
         }
@@ -1301,16 +1301,16 @@ public class ExcelUtil {
 
             Row row = getOrCreateRow(sheet, rowCount++);
             Cell keyCell = row.createCell(0);
-            keyCell.setCellValue(key);
             if (keyStyle != null) {
                 keyCell.setCellStyle(keyStyle);
             }
+            keyCell.setCellValue(key);
 
             Cell valueCell = row.createCell(1);
-            setCellValue(valueCell, value);
             if (valueStyle != null) {
                 valueCell.setCellStyle(valueStyle);
             }
+            setCellValue(valueCell, value);
         }
         return rowCount;
     }
@@ -1347,7 +1347,6 @@ public class ExcelUtil {
             Object value = entry.getValue();
 
             Cell cell = row.createCell(columnIndex);
-            setCellValue(cell, value);
 
             String styleName = (String) stylesByColumn.get(entry.getKey());
             CellStyle cellStyle = getOrCreateStyle(styleCache, styles, styleName, sheet);
@@ -1366,6 +1365,7 @@ public class ExcelUtil {
                 numberStyle.setAlignment(HorizontalAlignment.RIGHT);
                 cell.setCellStyle(numberStyle);
             }
+            setCellValue(cell, value);
         }
 
         return rowCount;
@@ -1484,11 +1484,26 @@ public class ExcelUtil {
 
         switch (value) {
             case null -> cell.setBlank();
-            case BigDecimal bd -> cell.setCellValue(MathUtil.formatNumber(bd));
-            case Integer i -> cell.setCellValue(MathUtil.formatNumber(BigDecimal.valueOf(i)));
-            case Long l -> cell.setCellValue(MathUtil.formatNumber(BigDecimal.valueOf(l)));
-            case Double d -> cell.setCellValue(MathUtil.formatNumber(BigDecimal.valueOf(d)));
-            case Float f -> cell.setCellValue(MathUtil.formatNumber(BigDecimal.valueOf(f)));
+            case BigDecimal bd -> setNumericCellValue(cell, bd);
+            case Integer i -> setNumericCellValue(cell, BigDecimal.valueOf(i));
+            case Long l -> setNumericCellValue(cell, BigDecimal.valueOf(l));
+            case Double d -> {
+                if (Double.isFinite(d)) {
+                    setNumericCellValue(cell, BigDecimal.valueOf(d));
+                } else {
+                    cell.setCellValue(d.toString());
+                }
+            }
+            case Float f -> {
+                if (Float.isFinite(f)) {
+                    setNumericCellValue(
+                            cell,
+                            new BigDecimal(Float.toString(f))
+                    );
+                } else {
+                    cell.setCellValue(f.toString());
+                }
+            }
             case String str -> {
                 // Strings starting with ' are treated as text.
                 String trimmed = str.trim();
@@ -1499,7 +1514,7 @@ public class ExcelUtil {
 
                 try {
                     BigDecimal bd = new BigDecimal(trimmed.replace(",", ""));
-                    cell.setCellValue(MathUtil.formatNumber(bd));
+                    setNumericCellValue(cell, bd);
                 } catch (NumberFormatException e) {
                     cell.setCellValue(str);
                 }
@@ -1681,5 +1696,33 @@ public class ExcelUtil {
         }
 
         return styleMap;
+    }
+
+    private static void setNumericCellValue(Cell cell, BigDecimal value) {
+        // Store as a real Excel numeric value.
+        int decimalPlaces = Math.max(0, value.scale());
+        String formatPattern;
+
+        if (decimalPlaces == 0) {
+            formatPattern = "#,##0";
+        } else {
+            formatPattern = "#,##0." + "0".repeat(decimalPlaces);
+        }
+
+        Workbook workbook = cell.getSheet().getWorkbook();
+
+        CellStyle currentStyle = cell.getCellStyle();
+        CellStyle numericStyle = workbook.createCellStyle();
+
+        if (currentStyle != null) {
+            numericStyle.cloneStyleFrom(currentStyle);
+        }
+
+        DataFormat dataFormat = workbook.createDataFormat();
+        numericStyle.setDataFormat(dataFormat.getFormat(formatPattern));
+        numericStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+        cell.setCellStyle(numericStyle);
+        cell.setCellValue(value.doubleValue());
     }
 }
