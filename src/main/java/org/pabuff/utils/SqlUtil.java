@@ -224,31 +224,27 @@ public class SqlUtil {
         }
 
         StringBuilder targetConstraint = new StringBuilder();
-//        boolean isConstraintPresent = false;
-        boolean includeNullValue = sqlMap.get("include_null_value") != null && sqlMap.get("include_null_value").equals("true");
+        boolean includeNullValue = "true".equals(sqlMap.get("include_null_value"));
+        boolean includeNullOrEmptyValue = "true".equals(sqlMap.get("include_null_or_empty_value"));
 
         //by default, use key = value
         if(sqlMap.get("target_key") != null && sqlMap.get("target_value") != null) {
             targetConstraint = new StringBuilder(sqlMap.get("target_key") + " = '" + sqlMap.get("target_value") + "'");
-//            isConstraintPresent = true;
         }else{
             //multiple target
             if(sqlMap.get("targets") != null){
                 if(sqlMap.get("targets") instanceof Map<?,?>){
                     Map<String, Object> targets = (Map<String, Object>) sqlMap.get("targets");
-                    if(!targets.keySet().isEmpty()) {
+                    if(!targets.isEmpty()) {
                         for (String key : targets.keySet()) {
 //                            targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
                             Object value = targets.get(key);
                             if(value == null ) {
                                 if (includeNullValue) {
 //                                    targetConstraint.append(key).append(" IS NULL AND ");
-//                                    if(isConstraintPresent){
-//                                        targetConstraint.append(" AND ");
-//                                    }
-//                                    targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) AND ");
-                                    targetConstraint.append(" AND ").append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) ");
-//                                    isConstraintPresent = true;
+                                    targetConstraint.append(" ( ").append(key).append(" IS NULL) AND ");
+                                } else if (includeNullOrEmptyValue) {
+                                    targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) AND ");
                                 } else {
                                     continue;
                                 }
@@ -618,7 +614,7 @@ public class SqlUtil {
             if(sqlMap.get("targets") != null){
                 if(sqlMap.get("targets") instanceof Map<?,?>){
                     Map<String, Object> targets = (Map<String, Object>) sqlMap.get("targets");
-                    if(!targets.keySet().isEmpty()) {
+                    if(!targets.isEmpty()) {
                         for (String key : targets.keySet()) {
 //                            targetConstraint.append(key).append(" = '").append(targets.get(key)).append("' AND ");
                             Object value = targets.get(key);
