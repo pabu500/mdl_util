@@ -607,7 +607,8 @@ public class SqlUtil {
         }
 
         StringBuilder targetConstraint = new StringBuilder();
-        boolean includeNullValue = sqlMap.get("include_null_value") != null && sqlMap.get("include_null_value").equals("true");
+        boolean includeNullValue = "true".equals(sqlMap.get("include_null_value"));
+        boolean includeNullOrEmptyValue = "true".equals(sqlMap.get("include_null_or_empty_value"));
 
         //by default, use key = value
         if(sqlMap.get("target_key") != null && sqlMap.get("target_value") != null) {
@@ -624,6 +625,8 @@ public class SqlUtil {
                             if(value == null ) {
                                 if (includeNullValue) {
 //                                    targetConstraint.append(key).append(" IS NULL AND ");
+                                    targetConstraint.append(" ( ").append(key).append(" IS NULL) AND ");
+                                } else if (includeNullOrEmptyValue) {
                                     targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) AND ");
                                 } else {
                                     continue;
@@ -986,8 +989,7 @@ public class SqlUtil {
                                     targetConstraint.append(" ( ").append(key).append(" IS NULL) AND ");
                                 } else if (includeNullOrEmptyValue) {
                                     targetConstraint.append(" ( ").append(key).append(" IS NULL or ").append(key).append(" = '' ) AND ");
-                                }
-                                else {
+                                } else {
                                     continue;
                                 }
                             }else {
