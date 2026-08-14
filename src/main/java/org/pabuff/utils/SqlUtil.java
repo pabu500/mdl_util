@@ -496,6 +496,11 @@ public class SqlUtil {
             sql.append("*");
         }
 
+        String joinType = (String) sqlMap.get("join_type");
+        if(joinType == null || joinType.isEmpty()){
+            joinType = "JOIN";
+        }
+
         sql.append(" FROM ");
         if(sqlMap.get("from") != null) {
             sql.append(sqlMap.get("from"));
@@ -504,7 +509,7 @@ public class SqlUtil {
         }
 
         if(sqlMap.get("join_table_names") != null) {
-            sql.append(" JOIN ").append(sqlMap.get("join_table_names"));
+            sql.append(" ").append(joinType).append(" ").append(sqlMap.get("join_table_names"));
         } else {
             return Map.of("error", "Missing join table name");
         }
