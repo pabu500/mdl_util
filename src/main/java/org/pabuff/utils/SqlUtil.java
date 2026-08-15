@@ -595,8 +595,14 @@ public class SqlUtil {
             return Map.of("error", "Missing table name");
         }
 
+        String joinType = (String) sqlMap.get("join_type");
+        if(joinType == null || joinType.isEmpty()){
+            joinType = "JOIN";
+        }
+
         if(sqlMap.get("join") != null) {
-            sql.append(" JOIN ").append(sqlMap.get("join"));
+//            sql.append(" JOIN ").append(sqlMap.get("join"));
+            sql.append(" ").append(joinType).append(" ").append(sqlMap.get("join"));
         } else {
             return Map.of("error", "Missing join table name");
         }
