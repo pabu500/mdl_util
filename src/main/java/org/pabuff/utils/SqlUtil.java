@@ -828,7 +828,8 @@ public class SqlUtil {
                 sql.append(" ").append(content.get(key)).append(",");
             } else {
                 // replace ' with '' to prevent SQL syntax error
-                String value = content.get(key).toString().replace("'", "''");
+//                String value = content.get(key).toString().replace("'", "''");
+                String value = replaceSingleQuote(content.get(key).toString());
                 sql.append(" '").append(value).append("',");
 //                sql.append(" '").append(content.get(key)).append("',");
             }
@@ -896,7 +897,8 @@ public class SqlUtil {
                 if((content.get(key)+"").isEmpty()) {
                     sql.append(" ").append(key).append(" = null,");
                 }else {
-                    String value = content.get(key).toString().replace("'", "''");
+//                    String value = content.get(key).toString().replace("'", "''");
+                    String value = replaceSingleQuote(content.get(key).toString());
                     sql.append(" ").append(key).append(" = '").append(value).append("',");
                 }
             }
@@ -1009,7 +1011,8 @@ public class SqlUtil {
                                         targetConstraint.append(key).append(" = '' AND ");
                                         continue;
                                     }
-                                    value = ((String) value).replace("'", "''");
+//                                    value = ((String) value).replace("'", "''");
+                                    value = replaceSingleQuote((String) value);
                                 }
                                 targetConstraint.append(key).append(" = '").append(/*targets.get(key)*/value).append("' AND ");
 
@@ -1054,7 +1057,8 @@ public class SqlUtil {
                                         likeTargetConstraint.append(key).append(" = '' AND ");
                                         continue;
                                     }
-                                    value = ((String) value).replace("'", "''");
+//                                    value = ((String) value).replace("'", "''");
+                                    value = replaceSingleQuote((String) value);
                                 }
                                 likeTargetConstraint.append(key).append(" ilike '%").append(/*likeTargets.get(key)*/value).append("%' AND ");
 
@@ -1207,4 +1211,11 @@ public class SqlUtil {
         return Map.of("sql", sql.toString());
     }
 
+    static String replaceSingleQuote(String value) {
+        if (value == null) {
+            return null;
+        }
+        // only escape single quotes that are not already escaped
+        return value.replaceAll("(?<!')'(?!')", "''");
+    }
 }
