@@ -19,6 +19,9 @@ import static java.lang.Integer.parseInt;
 //@Service
 public class ExcelUtil {
 
+    private static final Map<Workbook, Map<String, CellStyle>> numericStyleCaches =
+            Collections.synchronizedMap(new WeakHashMap<>());
+
 //    private static class ExtractedCellStyle {
 //        Short color;
 //        XSSFColor xssfColor;
@@ -1658,11 +1661,11 @@ public class ExcelUtil {
         Map<String, Object> styleMap = new HashMap<>();
 
         // Default body data style
-        styleMap.put("cell_wrap_text", true);
-        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
-        styleMap.put("font_name", "Arial");
-        styleMap.put("font_height", (short) 11);
-        styleMap.put("font_bold", false);
+//        styleMap.put("cell_wrap_text", true);
+//        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
+//        styleMap.put("font_name", "Arial");
+//        styleMap.put("font_height", (short) 11);
+//        styleMap.put("font_bold", false);
 
         /*
          * If default_body_data_style exists,
@@ -1683,11 +1686,11 @@ public class ExcelUtil {
     ) {
         Map<String, Object> styleMap = new HashMap<>();
 
-        styleMap.put("cell_wrap_text", true);
-        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
-        styleMap.put("font_name", "Arial");
-        styleMap.put("font_height", (short) 11);
-        styleMap.put("font_bold", false);
+//        styleMap.put("cell_wrap_text", true);
+//        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
+//        styleMap.put("font_name", "Arial");
+//        styleMap.put("font_height", (short) 11);
+//        styleMap.put("font_bold", false);
 
         if (defaultBodyDataStyle != null && !defaultBodyDataStyle.isBlank()
                 && excelStyles != null
@@ -1698,6 +1701,8 @@ public class ExcelUtil {
         return styleMap;
     }
 
+    // Cache for numeric cell styles based on workbook and decimal places
+    // to avoid creating duplicate styles for the same workbook and decimal places.
     private static void setNumericCellValue(Cell cell, BigDecimal value) {
         // Store as a real Excel numeric value.
         int decimalPlaces = Math.max(0, value.scale());
@@ -1710,17 +1715,40 @@ public class ExcelUtil {
         }
 
         Workbook workbook = cell.getSheet().getWorkbook();
-
         CellStyle currentStyle = cell.getCellStyle();
-        CellStyle numericStyle = workbook.createCellStyle();
 
-        if (currentStyle != null) {
-            numericStyle.cloneStyleFrom(currentStyle);
+        Map<String, CellStyle> styleCache =
+                numericStyleCaches.computeIfAbsent(
+                        workbook,
+                        k -> new HashMap<>()
+                );
+
+//        CellStyle currentStyle = cell.getCellStyle();
+//        CellStyle numericStyle = workbook.createCellStyle();
+//        if (currentStyle != null) {
+//            numericStyle.cloneStyleFrom(currentStyle);
+//        }
+//        DataFormat dataFormat = workbook.createDataFormat();
+//        numericStyle.setDataFormat(dataFormat.getFormat(formatPattern));
+//        numericStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+        short baseStyleIndex = currentStyle != null ? currentStyle.getIndex() : 0;
+        String cacheKey = baseStyleIndex + "|" + decimalPlaces;
+        CellStyle numericStyle = styleCache.get(cacheKey);
+
+        if (numericStyle == null) {
+
+            numericStyle = workbook.createCellStyle();
+            if (currentStyle != null) {
+                numericStyle.cloneStyleFrom(currentStyle);
+            }
+
+            DataFormat dataFormat = workbook.createDataFormat();
+            numericStyle.setDataFormat(dataFormat.getFormat(formatPattern));
+            numericStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+            styleCache.put(cacheKey, numericStyle);
         }
-
-        DataFormat dataFormat = workbook.createDataFormat();
-        numericStyle.setDataFormat(dataFormat.getFormat(formatPattern));
-        numericStyle.setAlignment(HorizontalAlignment.RIGHT);
 
         cell.setCellStyle(numericStyle);
         cell.setCellValue(value.doubleValue());
