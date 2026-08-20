@@ -130,6 +130,7 @@ public class ExcelUtil {
             excelStyleConfig = new ExcelStyleConfig(excelMap);
         }
 
+        Map<String, CellStyle> cellStyleCache = new HashMap<>();
         for (Map<String, Object> row : dataRows) {
             Row dataRow = sheet.createRow(rowCount++);
             columnCount = 0;
@@ -191,21 +192,47 @@ public class ExcelUtil {
                         }
                     }
 
-                    Font font = null;
-                    if(xssfFontColor != null || fontName != null || fontHeight != null || isBold != null || isItalic != null || fontColor != null) {
-                        if (xssfFontColor != null) {
-                            font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
-                        } else {
-                            font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
-                        }
-                    }
+                    boolean hasStyle = xssfColor != null || color != null || fillPattern != null || wrapText != null
+                            || xssfFontColor != null || fontName != null || fontHeight != null || isBold != null
+                            || isItalic != null || fontColor != null;
 
                     CellStyle style = null;
-                    if(xssfColor != null || color != null || fillPattern != null || wrapText != null || font != null) {
-                        if (xssfColor != null) {
-                            style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
-                        } else {
-                            style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                    if (hasStyle) {
+                        String cacheKey =
+                                "color=" + color +
+
+                                        "|xssfColor=" + xssfColor +
+                                        "|fill=" + fillPattern +
+                                        "|wrap=" + wrapText +
+                                        "|fontName=" + fontName +
+                                        "|fontHeight=" + fontHeight +
+                                        "|bold=" + isBold +
+                                        "|italic=" + isItalic +
+                                        "|fontColor=" + fontColor +
+                                        "|xssfFontColor=" + xssfFontColor;
+
+                        style = cellStyleCache.get(cacheKey);
+//                    CellStyle style = null;
+                        if (style == null) {
+                            Font font = null;
+                            if(xssfFontColor != null || fontName != null || fontHeight != null || isBold != null || isItalic != null || fontColor != null) {
+                                if (xssfFontColor != null) {
+                                    font = addFontStyle2(workbook, fontName, xssfFontColor, fontHeight, isBold, isItalic);
+                                } else {
+                                    font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
+                                }
+                            }
+
+    //                        style = null;
+                            if(xssfColor != null || color != null || fillPattern != null || wrapText != null || font != null) {
+                                if (xssfColor != null) {
+                                    style = addCellStyle2(workbook, sheetName, xssfColor, fillPattern, wrapText, font);
+                                } else {
+                                    style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
+                                }
+                            }
+
+                            cellStyleCache.put(cacheKey, style);
                         }
                     }
 
@@ -1661,11 +1688,11 @@ public class ExcelUtil {
         Map<String, Object> styleMap = new HashMap<>();
 
         // Default body data style
-//        styleMap.put("cell_wrap_text", true);
-//        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
-//        styleMap.put("font_name", "Arial");
-//        styleMap.put("font_height", (short) 11);
-//        styleMap.put("font_bold", false);
+        styleMap.put("cell_wrap_text", true);
+        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
+        styleMap.put("font_name", "Arial");
+        styleMap.put("font_height", (short) 11);
+        styleMap.put("font_bold", false);
 
         /*
          * If default_body_data_style exists,
@@ -1686,11 +1713,11 @@ public class ExcelUtil {
     ) {
         Map<String, Object> styleMap = new HashMap<>();
 
-//        styleMap.put("cell_wrap_text", true);
-//        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
-//        styleMap.put("font_name", "Arial");
-//        styleMap.put("font_height", (short) 11);
-//        styleMap.put("font_bold", false);
+        styleMap.put("cell_wrap_text", true);
+        styleMap.put("cell_vertical_alignment", VerticalAlignment.CENTER);
+        styleMap.put("font_name", "Arial");
+        styleMap.put("font_height", (short) 11);
+        styleMap.put("font_bold", false);
 
         if (defaultBodyDataStyle != null && !defaultBodyDataStyle.isBlank()
                 && excelStyles != null
