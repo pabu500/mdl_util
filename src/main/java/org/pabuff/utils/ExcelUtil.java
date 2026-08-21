@@ -236,7 +236,7 @@ public class ExcelUtil {
                         }
                     }
 
-                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style, false);
                     continue;
                 }
 
@@ -473,7 +473,7 @@ public class ExcelUtil {
 //                    style.setAlignment(HorizontalAlignment.RIGHT);
 //                }
 
-                setCell(workbook, sheetName, currentRow, currentCol, cellValue, null, style);
+                setCell(workbook, sheetName, currentRow, currentCol, cellValue, null, style, true);
 
 //                if (entry.getValue() instanceof String) {
 //                    cell.setCellValue((String) entry.getValue());
@@ -692,7 +692,7 @@ public class ExcelUtil {
                         }
                     }
 
-                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style);
+                    setCell(workbook, sheetName, rowCount-1, columnCount-1, entry.getValue(), null, style, false);
                     continue;
 
                 }
@@ -781,7 +781,7 @@ public class ExcelUtil {
         }
     }
 
-    public static void setCell(Workbook workbook, String sheetName, int row, int col, Object value, Double width, CellStyle style) {
+    public static void setCell(Workbook workbook, String sheetName, int row, int col, Object value, Double width, CellStyle style, boolean isNumericEnabled) {
         Sheet sheet = workbook.getSheet(sheetName);
         if(sheet == null) {
             sheet = workbook.createSheet(sheetName);
@@ -797,7 +797,7 @@ public class ExcelUtil {
         if(style != null) {
             cell.setCellStyle(style);
         }
-        setCellValue(cell, value);
+        setCellValue(cell, value, isNumericEnabled);
         if(width != null) {
             sheet.setColumnWidth(col, width.intValue());
         }
@@ -879,7 +879,7 @@ public class ExcelUtil {
                 Font font = addFontStyle(workbook, fontName, fontColor, fontHeight, isBold, isItalic);
                 style = addCellStyle(workbook, sheetName, color, fillPattern, wrapText, font);
             }
-            setCell(workbook, sheetName, row, col, value, width, style);
+            setCell(workbook, sheetName, row, col, value, width, style, false);
         }
     }
 
@@ -1340,7 +1340,7 @@ public class ExcelUtil {
             if (valueStyle != null) {
                 valueCell.setCellStyle(valueStyle);
             }
-            setCellValue(valueCell, value);
+            setCellValue(valueCell, value, true);
         }
         return rowCount;
     }
@@ -1395,7 +1395,7 @@ public class ExcelUtil {
                 numberStyle.setAlignment(HorizontalAlignment.RIGHT);
                 cell.setCellStyle(numberStyle);
             }
-            setCellValue(cell, value);
+            setCellValue(cell, value, true);
         }
 
         return rowCount;
@@ -1506,7 +1506,15 @@ public class ExcelUtil {
         return VerticalAlignment.valueOf(value.toString().toUpperCase());
     }
 
-    private static void setCellValue(Cell cell, Object value) {
+    private static void setCellValue(Cell cell, Object value, boolean isNumericEnabled) {
+        if (!isNumericEnabled) {
+            if (value == null) {
+                cell.setBlank();
+            } else {
+                cell.setCellValue(value.toString());
+            }
+            return;
+        }
 
 //        DecimalFormat decimalFormat = new DecimalFormat("#,##0.##");
 //        DecimalFormat decimalFormat2 = new DecimalFormat("#,##0.00");
