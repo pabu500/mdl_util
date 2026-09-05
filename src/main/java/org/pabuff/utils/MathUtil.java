@@ -55,7 +55,7 @@ public class MathUtil {
     }
 
     public static double findMin(List<Double> numbers) {
-        double min = numbers.get(0);
+        double min = numbers.getFirst();
         for (double number : numbers) {
             if (number < min) {
                 min = number;
@@ -64,7 +64,7 @@ public class MathUtil {
         return min;
     }
     public static double findMinNonZero(List<Double> numbers) {
-        double min = numbers.get(0);
+        double min = numbers.getFirst();
         for (double number : numbers) {
             if (number < min && number != 0) {
                 min = number;
@@ -74,7 +74,7 @@ public class MathUtil {
     }
 
     public static double findMax(List<Double> numbers) {
-        double max = numbers.get(0);
+        double max = numbers.getFirst();
         for (double number : numbers) {
             if (number > max) {
                 max = number;
@@ -169,7 +169,9 @@ public class MathUtil {
 
     public static Long findDominantLong(List<Double> numbers) {
         Map<Long, Integer> frequencyMap = new HashMap<>();
-        long dominantLong = Math.round(numbers.get(0));
+//        long dominantLong = Math.round(numbers.getFirst());
+        Long dominantLong = null;
+
         int dominantFrequency = 1;
 
         for (double number : numbers) {
@@ -187,7 +189,7 @@ public class MathUtil {
 
     public static Map<String, Double> findIntervalStat(List<Double> numbers, double threshold) {
         Map<Long, Integer> frequencyMap = new HashMap<>();
-        long dominantLong = Math.round(numbers.get(0));
+        long dominantLong = Math.round(numbers.getFirst());
         int dominantFrequency = 1;
         long intervalOutlierCount = 0;
         double minNonZeroInterval = Double.MAX_VALUE;
