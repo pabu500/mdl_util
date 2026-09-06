@@ -1094,7 +1094,9 @@ public class SqlUtil {
                             valueOrNullTargetConstraint.append(" OR ").append(key).append(" IS NULL) AND ");
                         }
                     }
-                    valueOrNullTargetConstraint = new StringBuilder(valueOrNullTargetConstraint.substring(0, valueOrNullTargetConstraint.length() - 5));
+                    if(valueOrNullTargetConstraint.length() > 5) {
+                        valueOrNullTargetConstraint = new StringBuilder(valueOrNullTargetConstraint.substring(0, valueOrNullTargetConstraint.length() - 5));
+                    }
                     if(targetConstraint.toString().isEmpty()) {
                         targetConstraint = valueOrNullTargetConstraint;
                     } else {
