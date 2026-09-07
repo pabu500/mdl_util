@@ -1077,7 +1077,7 @@ public class SqlUtil {
 
         if(sqlMap.get("value_or_null_targets") != null){
             if(sqlMap.get("value_or_null_targets") instanceof Map<?,?>){
-                StringBuilder valueOrNullTargetConstraint = new StringBuilder();
+                StringBuilder valueOrNullTargetConstraint = new StringBuilder("1=1");
                 Map<String, Object> valueOrNullTargets = (Map<String, Object>) sqlMap.get("value_or_null_targets");
                 if(!valueOrNullTargets.isEmpty()) {
                     for (String key : valueOrNullTargets.keySet()) {
