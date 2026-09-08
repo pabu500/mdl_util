@@ -1100,7 +1100,9 @@ public class SqlUtil {
                     if(targetConstraint.toString().isEmpty()) {
                         targetConstraint = valueOrNullTargetConstraint;
                     } else {
-                        targetConstraint.append(" AND ").append(valueOrNullTargetConstraint);
+                        if(!valueOrNullTargetConstraint.isEmpty()) {
+                            targetConstraint.append(" AND ").append(valueOrNullTargetConstraint);
+                        }
                     }
                 }
             }
