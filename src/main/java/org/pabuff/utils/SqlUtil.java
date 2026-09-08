@@ -1038,7 +1038,7 @@ public class SqlUtil {
                     StringBuilder likeTargetConstraint = new StringBuilder();
                     Map<String, Object> likeTargets = (Map<String, Object>) sqlMap.get("like_targets");
 
-                    if(!likeTargets.keySet().isEmpty()) {
+                    if(!likeTargets.isEmpty()) {
                         for (String key : likeTargets.keySet()) {
                             Object value = likeTargets.get(key);
                             if(value == null ){
@@ -1077,7 +1077,7 @@ public class SqlUtil {
 
         if(sqlMap.get("value_or_null_targets") != null){
             if(sqlMap.get("value_or_null_targets") instanceof Map<?,?>){
-                StringBuilder valueOrNullTargetConstraint = new StringBuilder("1=1");
+                StringBuilder valueOrNullTargetConstraint = new StringBuilder();
                 Map<String, Object> valueOrNullTargets = (Map<String, Object>) sqlMap.get("value_or_null_targets");
                 if(!valueOrNullTargets.isEmpty()) {
                     for (String key : valueOrNullTargets.keySet()) {
@@ -1094,9 +1094,9 @@ public class SqlUtil {
                             valueOrNullTargetConstraint.append(" OR ").append(key).append(" IS NULL) AND ");
                         }
                     }
-//                    if(valueOrNullTargetConstraint.length() > 5) {
-//                        valueOrNullTargetConstraint = new StringBuilder(valueOrNullTargetConstraint.substring(0, valueOrNullTargetConstraint.length() - 5));
-//                    }
+                    if(valueOrNullTargetConstraint.length() > 5) {
+                        valueOrNullTargetConstraint = new StringBuilder(valueOrNullTargetConstraint.substring(0, valueOrNullTargetConstraint.length() - 5));
+                    }
                     if(targetConstraint.toString().isEmpty()) {
                         targetConstraint = valueOrNullTargetConstraint;
                     } else {
