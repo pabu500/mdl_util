@@ -30,45 +30,53 @@ public class DateTimeUtil {
     public final static long tenSec = 10000L;
 
     public final static String desTimeStampFormat = "yyyy-MM-dd HH:mm:ss";
-    public final static String desTimeStampFormatIncludingMs = "yyyy-MM-dd HH:mm:ss.SSS";
+    public final static String desTimeStampFormatIncludingMs1 = "yyyy-MM-dd HH:mm:ss.S";
+    public final static String desTimeStampFormatIncludingMs3 = "yyyy-MM-dd HH:mm:ss.SSS";
     public final static String desTimeStampFormatIncludingMs6 = "yyyy-MM-dd HH:mm:ss.SSSSSS";
     public final static String desTimeStampFormatIncludingMs6WithZone = "yyyy-MM-dd HH:mm:ss.SSSSSSXXX";
 
     public final static SimpleDateFormat sdf = new SimpleDateFormat(desTimeStampFormat);
     public final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern(desTimeStampFormat);
-    public final static SimpleDateFormat sdfms = new SimpleDateFormat(desTimeStampFormatIncludingMs);
-    public final static DateTimeFormatter formatterMs = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs);
-    public final static SimpleDateFormat sdfms6 = new SimpleDateFormat(desTimeStampFormatIncludingMs6);
+//    public final static SimpleDateFormat sdfms1 = new SimpleDateFormat(desTimeStampFormatIncludingMs1);
+    public final static DateTimeFormatter formatterMs1 = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs1);
+//    public final static SimpleDateFormat sdfms3 = new SimpleDateFormat(desTimeStampFormatIncludingMs3);
+    public final static DateTimeFormatter formatterMs3 = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs3);
+//    public final static SimpleDateFormat sdfms6 = new SimpleDateFormat(desTimeStampFormatIncludingMs6);
     public final static DateTimeFormatter formatterMs6 = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs6);
     public static DateTimeFormatter formatterIso8601 = DateTimeFormatter.ISO_DATE_TIME;
     public static DateTimeFormatter formatterMs6WithZone = DateTimeFormatter.ofPattern(desTimeStampFormatIncludingMs6WithZone);
 
     public static LocalDateTime getLocalDateTime(String strTimestamp) {
-        if(strTimestamp == null || strTimestamp.isEmpty()) {
+        if (strTimestamp == null || strTimestamp.isEmpty()) {
             return null;
         }
         try {
             return LocalDateTime.parse(strTimestamp, formatter);
-        }catch (Exception e) {
+        } catch (Exception e) {
             try {
-                return LocalDateTime.parse(strTimestamp, formatterMs);
+                return LocalDateTime.parse(strTimestamp, formatterMs1);
             } catch (Exception e1) {
                 try {
-                    return LocalDateTime.parse(strTimestamp, formatterMs6);
+                    return LocalDateTime.parse(strTimestamp, formatterMs3);
                 } catch (Exception e2) {
                     try {
-                        return LocalDateTime.parse(strTimestamp, formatterIso8601);
-                    } catch (Exception e4) {
+                        return LocalDateTime.parse(strTimestamp, formatterMs6);
+                    } catch (Exception e3) {
                         try {
-                            return OffsetDateTime.parse(strTimestamp, formatterMs6WithZone).toLocalDateTime();
-                        } catch (Exception e5) {
-                            return null;
+                            return LocalDateTime.parse(strTimestamp, formatterIso8601);
+                        } catch (Exception e4) {
+                            try {
+                                return OffsetDateTime.parse(strTimestamp, formatterMs6WithZone).toLocalDateTime();
+                            } catch (Exception e5) {
+                                return null;
+                            }
                         }
                     }
                 }
             }
         }
     }
+
     public static LocalDateTime getLocalDateTime2(String dateTimeStr, boolean tryZoneFormatterFirst) {
         if(tryZoneFormatterFirst){
             try {
@@ -78,15 +86,19 @@ public class DateTimeUtil {
                     return LocalDateTime.parse(dateTimeStr, formatterMs6);
                 } catch (Exception e1) {
                     try {
-                        return LocalDateTime.parse(dateTimeStr, formatterMs);
+                        return LocalDateTime.parse(dateTimeStr, formatterMs3);
                     } catch (Exception e2) {
-                        try {
-                            return LocalDateTime.parse(dateTimeStr, formatter);
+                        try{
+                            return LocalDateTime.parse(dateTimeStr, formatterMs1);
                         } catch (Exception e3) {
                             try {
-                                return LocalDateTime.parse(dateTimeStr, formatterIso8601);
+                                return LocalDateTime.parse(dateTimeStr, formatter);
                             } catch (Exception e4) {
-                                return null;
+                                try {
+                                    return LocalDateTime.parse(dateTimeStr, formatterIso8601);
+                                } catch (Exception e5) {
+                                    return null;
+                                }
                             }
                         }
                     }
@@ -102,15 +114,19 @@ public class DateTimeUtil {
     }
     public static ZonedDateTime getZonedDateTime(String dateTimeStr, ZoneId zoneId) {
         try {
-            return ZonedDateTime.parse(dateTimeStr, formatter).withZoneSameInstant(zoneId);
+            return getZonedDateTime(LocalDateTime.parse(dateTimeStr, formatter), zoneId);
         }catch (Exception e) {
             try {
-                return ZonedDateTime.parse(dateTimeStr, formatterMs).withZoneSameInstant(zoneId);
+                return getZonedDateTime(LocalDateTime.parse(dateTimeStr, formatterMs1), zoneId);
             } catch (Exception e1) {
                 try {
-                    return ZonedDateTime.parse(dateTimeStr, formatterMs6).withZoneSameInstant(zoneId);
+                    return getZonedDateTime(LocalDateTime.parse(dateTimeStr, formatterMs3), zoneId);
                 } catch (Exception e2) {
-                    return null;
+                    try {
+                        return getZonedDateTime(LocalDateTime.parse(dateTimeStr, formatterMs6), zoneId);
+                    } catch (Exception e3) {
+                        return null;
+                    }
                 }
             }
         }
@@ -120,12 +136,16 @@ public class DateTimeUtil {
             return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatter);
         }catch (Exception e) {
             try {
-                return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs);
+                return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs1);
             } catch (Exception e1) {
                 try {
-                    return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs6);
+                    return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs3);
                 } catch (Exception e2) {
-                    return null;
+                    try {
+                        return Objects.requireNonNull(getZonedDateTime(localDateTimeStr, zoneId)).format(formatterMs6);
+                    } catch (Exception e3) {
+                        return null;
+                    }
                 }
             }
         }
@@ -135,12 +155,16 @@ public class DateTimeUtil {
             return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatter);
         }catch (Exception e) {
             try {
-                return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatterMs);
+                return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatterMs1);
             } catch (Exception e1) {
                 try {
-                    return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatterMs6);
+                    return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatterMs3);
                 } catch (Exception e2) {
-                    return null;
+                    try {
+                        return Objects.requireNonNull(getZonedDateTime(localDateTime, zoneId)).format(formatterMs6);
+                    } catch (Exception e3) {
+                        return null;
+                    }
                 }
             }
         }
@@ -178,7 +202,7 @@ public class DateTimeUtil {
     }
 
     public static String getSgNowStrMs() {
-        return getZonedDateTime(LocalDateTime.now(), ZoneId.of("Asia/Singapore")).format(formatterMs);
+        return getZonedDateTime(LocalDateTime.now(), ZoneId.of("Asia/Singapore")).format(formatterMs3);
     }
 
     public static int getDaysInMonth(LocalDateTime dateTime) {
