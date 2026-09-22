@@ -266,9 +266,9 @@ public class DateTimeUtil {
             return dateStr.replace(" ", "T");
         }
 
-        // Handle "YYYY-MM-DD HH:mm:s"
-        if (dateStr.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d")) {
-            return dateStr.replace(" ", "T") + "0";
+        // Handle "YYYY-MM-DD HH:mm:ss:S"
+        if (dateStr.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}:\\d")) {
+            return dateStr.replace(" ", "T").replace(":", ".");
         }
 
         // Handle "YYYY-MM-DD"
