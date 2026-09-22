@@ -266,6 +266,11 @@ public class DateTimeUtil {
             return dateStr.replace(" ", "T");
         }
 
+        // Handle "YYYY-MM-DD HH:mm:s"
+        if (dateStr.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d")) {
+            return dateStr.replace(" ", "T") + "0";
+        }
+
         // Handle "YYYY-MM-DD"
         if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
             return dateStr + "T00:00:00";
